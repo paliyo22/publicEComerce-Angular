@@ -1,0 +1,147 @@
+<button [disabled]="processing()" (click)="onChange('movements')"></button>
+<button [disabled]="processing()" (click)="onChange('incomeList')"></button>
+<button [disabled]="processing()" (click)="onChange('withdrawalList')"></button>
+<button [disabled]="processing()" (click)="onChange('withdrawal')"></button>
+
+@if (processing()) {
+    <!-- mensaje de cargando, podria desactivar los botones para obligar al usuario a esperar la resolucion -->
+}@else {
+    @switch (show()) {
+        @case ('movements') {
+            @if (withdrawalState().loading || incomeState().loading) {
+                <!-- cargando -->
+            } @else if (withdrawalState().error && incomeState().error) {
+                <!-- error con botón de recargar -->
+                 <button (click)="onRetry()">Reintentar</button>
+            } @else {
+                @if (records().length > 0) {
+                    @let rec = records();
+                    <!-- algo similar a esto, podrian tener distintos colores de fonco para diferenciar ingresos de retiros. -->
+                    @for (r of rec; track $index) {
+                        @if(r.type === 'income'){
+                            <p>{{r.orderId}}</p>
+                            <p>{{r.amount}}</p>
+                            <p>{{r.created}}</p>
+                        }@else {
+                            <p>{{r.amount}}</p>
+                            <p>{{r.status}}</p>
+                            <p>{{r.cbu}}</p>
+                            <p>{{r.created}}</p>
+                        }
+                    }
+                    <button (click)="onRetry()">Actualizar</button>
+                } @else {
+                    <!-- estado vacío -->
+                }
+            }
+        }
+        @case ('incomeList') {
+            @if (incomeVariationsState().loading) {
+                <!-- spiner -->
+            }@else if (incomeVariationsState().error){
+                @switch (incomeVariationsState().error) {
+                    @case ('TIMEOUT') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('UNAVAILABLE') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('INTERNAL_ERROR') {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
+                    }
+                    @default {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+                    }
+                }
+                <button (click)="onCleanVariationError()">Ok</button>
+            }@else {
+                <p>{{incomeVariationsState().data!.total}}</p>
+                <p>{{incomeVariationsState().data!.since}}</p>
+                <p>{{incomeVariationsState().data!.until}}</p>
+                <!-- aca un forms o un imput que pida fecha de "desde" y fecha de "hasta", puede dejar los 2 en blanco -->
+                <button (click)="onGetVariations()"></button>
+            }
+            @if (incomeState().loading) {
+                <!-- aca se muestra el mensaje de cargando -->
+            }@else if (incomeState().error) {
+                @switch (incomeState().error) {
+                    @case ('TIMEOUT') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('UNAVAILABLE') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('INTERNAL_ERROR') {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
+                    }
+                    @default {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+                    }
+                }
+                <button (click)="onRetry()">Reintentar</button>
+            }@else {
+                <!-- aca muestro la lista completa -->
+                <button (click)="onRetry()">Actualizar</button>
+            }
+        }
+        @case ('withdrawalList') {
+            @if (expensesVariationsState().loading) {
+                <!-- spiner -->
+            }@else if (expensesVariationsState().error) {
+                @switch (expensesVariationsState().error) {
+                    @case ('TIMEOUT') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('UNAVAILABLE') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('INTERNAL_ERROR') {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
+                    }
+                    @default {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+                    }
+                }
+                <button (click)="onCleanVariationError()">Ok</button>
+            }@else {
+                <p>{{expensesVariationsState().data!.total}}</p>
+                <p>{{expensesVariationsState().data!.since}}</p>
+                <p>{{expensesVariationsState().data!.until}}</p>
+                <!-- aca un forms o un imput que pida fecha de "desde" y fecha de "hasta", puede dejar los 2 en blanco -->
+                <button (click)="onGetVariations()"></button>
+            }
+            @if (withdrawalState().loading) {
+                <!-- aca se muestra el mensaje de cargando -->
+            }@else if (withdrawalState().error) {
+                @switch (withdrawalState().error) {
+                    @case ('TIMEOUT') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('UNAVAILABLE') {
+                        <!-- es un error interno, se puede reintentar. -->
+                    }
+                    @case ('INTERNAL_ERROR') {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
+                    }
+                    @default {
+                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+                    }
+                }
+                <button (click)="onRetry()">Reintentar</button>
+            }@else {
+                <!-- aca muestro la lista completa -->
+                <button (click)="onRetry()">Actualizar</button>
+            }
+        }
+        @case ('withdrawal') {
+            @if (balanceState().loading) {
+                <!-- aca se muestra el mensaje de cargando -->
+            }@else if (balanceState().error) {
+                <!-- aca se muestra mensaje de error en el sistema, contacte a soporte tecnico -->
+                <button (click)="onRetry()">Reintentar</button>
+            }@else {
+                <!-- input o form para que no pueda ingrast numeros negativos o un valor mayor al balanceState().data.amount -->
+            }
+        }
+    }
+}

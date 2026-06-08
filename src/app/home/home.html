@@ -1,0 +1,68 @@
+@if (catalogState().loading) {
+    <!-- spiner -->
+} @else if (catalogState().error) {
+    @switch (catalogState().error) {
+        @case ('NETWORK_ERROR') {
+            <p class="error-message">Parece que no tienes conexión a internet. Revisa tu red.</p>
+        }
+        @case ('NOT_FOUND') {
+            <p class="error-message">No se encontraron productos en esta categoría.</p>
+        }
+        @default {
+            <p class="error-message">Ocurrió un error inesperado. Intente nuevamente.</p>
+        }
+    }
+    <button (click)="onRetry()">Recargar</button>
+} @else {
+    <app-featured/>
+    
+    @let currentPage = p() ?? 1;
+    @if (catalogState().data.size < 1) {
+        <!-- no hay productos de esa categoria -->
+    }@else if (maxPages() < currentPage){
+        <!-- no existe la pagina a la que intenta acceder -->
+    }@else {
+        @let products = catalogState().data.get(currentPage);
+        @if (!products) {
+            <!-- spiner -->
+        }@else {
+            @for (prod of products; track prod.id) {
+                <h3 [routerLink]="['/product', prod.id]">{{prod.title}}</h3>
+                <button [disabled]="processing().has(prod.id)" (click)="onAddToCart(prod.id, prod.title)"><!-- simbolo de agregar al carrito --></button>
+            }
+        }        
+        @if (maxPages() > 1) {
+            <button 
+                class="pagination-btn" 
+                [disabled]="currentPage === 1" 
+                [routerLink]="['/']" 
+                [queryParams]="{ page: currentPage - 1 }" 
+                queryParamsHandling="merge">
+                <span>Anterior</span>
+            </button>
+
+            <div class="pagination-pages">
+                @for (page of getVisiblePages(); track page) {
+                    <button 
+                        class="page-number" 
+                        [routerLink]="['/']" 
+                        [queryParams]="{ page: page }" 
+                        queryParamsHandling="merge"
+                        [class.active]="page === currentPage"
+                        [style.pointer-events]="page === '...' ? 'none' : 'auto'">
+                        {{ page }}
+                    </button>
+                }
+            </div>
+
+            <button 
+                class="pagination-btn" 
+                [disabled]="currentPage === maxPages()" 
+                [routerLink]="['/']" 
+                [queryParams]="{ page: currentPage + 1 }" 
+                queryParamsHandling="merge">
+                <span>Siguiente</span>
+            </button>
+        }
+    }
+}

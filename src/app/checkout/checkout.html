@@ -1,0 +1,28 @@
+@if (products().length > 0) {
+    <!-- aca muestro los datos de el/los productos y la cantidad -->
+}@else {
+    <!-- aca no deberia entrar jamas puedo poner mensaje de error o redirijir al home -->
+}
+
+@if(show() === 'form'){
+    @if(addressState().data){
+        <!-- aca puedo mostrar un menu desplegable o 
+        algo que permita seleccionar alguna de las direcciones guardadas de la cuenta, 
+        para autocompletar el forms -->
+    }
+    <!-- aca muestro el forms para agregar la direccion -->
+    <!-- boton confirmar y cancelar --> 
+    <button (click)="onConfirmForm()"></button>
+    <button (click)="onCancel()">Cancelar</button>
+}@else if (show() === 'unavailable') {
+    @if(unavailableProducts.length){
+        <!-- aca muestro los productos que no estan disponibles con la razon por la que fallo -->
+        <button (click)="onCancel()">Volver</button>
+    }@else {
+        <!-- aca implica un error que no deberia pasar nunca -->
+    }
+}@else {
+    <!-- aca muestro los datos que me da el DraftOrderSchema(total y la direccion completa)
+     tambien los botones confirmar y cancelar para realizar el pago o cancelar-->
+    <button (click)="onCancel()">Cancelar</button>
+}

@@ -1,0 +1,34 @@
+@if(storeState().loading){
+    <!-- mensaje de cargando -->
+}@else if (storeState().error) {
+    @switch (storeState().error) {
+        @case ('TIMEOUT') {
+            <!-- ah ocurrido un error, si este error persiste contacte con soporte. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- estamos experimentando errores, intente mas tarde -->
+        }
+        @case ('NOT_FOUND') {
+            <!-- error al eliminar -->
+        }
+        @default {
+            <!-- error interno, reintente o contacte con soporte si el error persiste. -->
+        }
+    }
+    <button (click)="onRetry()">Recargar</button>
+}@else {
+    <button (click)="onBack()"><!-- flecha que representa volver atras --></button>
+    <!-- forms para agregar -->
+    <button (click)="onConfirm()">Confirmar</button>
+    
+    @let storeList = storeState().data!;
+    @if(storeList.length > 0){
+        <!-- listo las tiendas registradas -->    
+        @for (s of storeList; track s.id) {
+            <!-- muestro los datos de la tienda -->
+            <button [disabled]="processing().has(s.id)" (click)="onDelete(s.id)"><!-- boton para eliminar --></button>
+        } 
+    }@else {
+        <!-- no tienes tiendas registradas. -->
+    }
+}

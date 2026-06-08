@@ -1,0 +1,15 @@
+@if (featuredState().loading) {
+    <!-- spiner -->
+}@else if (featuredState().error) {
+    <!-- error simple y generico -->
+    <button (click)="onRetry()">Recargar</button>
+}@else{
+    @if (!featuredState().data.length) {
+        <!-- aca no muestro nada asi el bloque desaparece -->
+    }@else {
+        @for (f of featuredState().data; track f.id) {
+            <h2 [routerLink]="['/product', f.id]"></h2>
+            <button [disabled]="processing().has(f.id)" (click)="onAddToCart(f.id, f.title)"><!-- simbolo de agregar al carrito --></button>
+        }
+    }
+}

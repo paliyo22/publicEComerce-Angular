@@ -1,0 +1,37 @@
+<div class="create-account">
+    @if (state().loading) {
+        <!-- spiner con mensaje de cargando -->
+    }@else if (state().error) {
+        @switch(state().error){
+            @case ('EMAIL_NOT_AVAILABLE') { 
+                <!-- mostrar alerta de email no disponible. -->
+            }
+            @case ('USERNAME_NOT_AVAILABLE') {
+                <!-- mostrar alerta de username no disponible. -->
+            }
+            @default{
+                <!-- mostrar mensaje de algo ha salido mal, reintente. --> 
+            } 
+        }
+        <button (click)="onCleanError()">Volver</button>
+    }@else {
+        @switch (show()) {
+            @case ('none') {
+                <!-- aca un mensage generico para que el usuario decida si quiere crear una cuenta normal(user) o empresarial(business) -->
+                <button (click)="onSelectAccount('user')">Cuenta</button>
+                <button (click)="onSelectAccount('business')">Empresarial</button>
+            }
+            @case ('business') {
+                <!-- aca se muestra el forms para crear la cuenta empresarial(business) -->
+                <button (click)="onConfirm()">Confirmar</button>
+                <button (click)="onSelectAccount('none')">Cancelar</button>
+            }
+            @case ('user') {
+                <!-- aca se muestra el forms para crear la cuenta normal(user) -->
+                <button (click)="onConfirm()">Confirmar</button>
+                <button (click)="onSelectAccount('none')">Cancelar</button>
+            }
+        }   
+    }
+</div>
+

@@ -1,0 +1,34 @@
+@if(addressState().loading){
+    <!-- mensaje de cargando -->
+}@else if (addressState().error) {
+    @switch (addressState().error) {
+        @case ('TIMEOUT') {
+            <!-- ah ocurrido un error, si este error persiste contacte con soporte. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- estamos experimentando errores, intente mas tarde -->
+        }
+        @case ('NOT_FOUND') {
+            <!-- error al eliminar -->
+        }
+        @default {
+            <!-- error interno, reintente o contacte con soporte si el error persiste. -->
+        }
+    }
+    <button (click)="onRetry()">Recargar</button>
+}@else {
+    <button (click)="onBack()"><!-- flecha que representa volver atras --></button>
+    <!-- forms para agregar -->
+    <button (click)="onConfirm()">Confirmar</button>
+    
+    @let addressList = addressState().data!;
+    @if(addressList.length > 0){
+        <!-- listo las direcciones registradas -->    
+        @for (a of addressList; track a.id) {
+            <!-- muestro los datos de la direccion -->
+            <button [disabled]="processing().has(a.id)" (click)="onDelete(a.id)"><!-- boton para eliminar --></button>
+        } 
+    }@else {
+        <!-- no tienes direcciones registradas. -->
+    }
+}

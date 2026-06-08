@@ -1,0 +1,56 @@
+@if(productState().loading){
+    <!-- spiner -->
+}@else {
+    @if(productState().error){
+        @switch (productState().error) {
+            @case ('TIMEOUT') {
+                <!-- Error al obtener el resultado. Actualice la pagina. -->
+            }
+            @case ('UNAVAILABLE') {
+                <!-- Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo. -->
+            }
+            @case ('INTERNAL_ERROR') {
+                <!-- Ups! Parece que algo ha fallado, vuelva a intntar. Si el error persiste contacte con soporte. -->
+            }
+            @case ('NETWORK_ERROR') {
+                <!-- Error de coneccion. Checke su conneccion a internet y reintente. -->
+            }
+            @case ('NOT_FOUND') {
+                <!-- El producto que intenta buscar no existe. -->
+            }
+            <!-- estos son solo errores de update/delete -->
+            @case ('UNAUTHORIZED') {
+                <!-- ERROR INTERNO: Este producto no pertenece al usuario loggeado  -->
+            }
+            @case ('BANNED') {
+                <!-- No se puede modificar un producto eliminado. -->
+            }
+            @case ('DELETED') {
+                <!-- No se puede modificar un producto eliminado. -->
+            }
+            @case ('BAD_REQUEST') {
+                <!-- La categoria seleccionada no existe. -->
+            }
+            @default {
+                <!-- Error interno, vuelva a intentar. Si el error persiste contacte con soporte. -->
+            }
+        }
+        <button (click)="onRetry()">Reintentar</button>
+    }@else {
+        @let p = productState().data!;
+        @if(!editing()){
+            <!-- aca armar el html para mostrar el producto -->
+            <p [routerLink]="['/profile', p.accountUsername]">{{p.accountUsername}}</p>
+            @if(authState().data?.username === p.accountUsername){
+                <button (click)="onEdit()">Editar</button>
+                <button (click)="onDelete()">Eliminar</button>
+            }
+            <!-- seccion de reviews -->
+            <app-product-reviews/>
+        }@else{
+            <app-product-update
+                (onReturn)="onEdit()"
+            />
+        }  
+    }
+}

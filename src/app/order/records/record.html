@@ -1,0 +1,65 @@
+<!-- esto solo se muestra si la cuenta no tiene rol "user" -->
+@if (authState().data!.role !== 'user') {
+    <button [disabled]="show() === 'shoppings'" (click)="onChangeTemplate()">Compras</button>
+    <button [disabled]="show() === 'sales'" (click)="onChangeTemplate()">Ventas</button>
+}
+
+@if(show() === 'shoppings'){
+    @if (shoppingState().loading) {
+        <!-- spiner -->
+    }@else if (shoppingState().error) {
+        @switch (shoppingState().error) {
+            @case ('TIMEOUT') {
+                <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
+            }
+            @case ('UNAVAILABLE') {
+                <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
+            }
+            @case ('INTERNAL_ERROR') {
+                <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
+            }
+            @default {
+                <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+            }
+        }
+    }@else {
+        @let list = shoppingState().data!;
+
+        <button (click)="onReload()"><!-- simbolo de actualizar --></button>
+        <!-- muestro -->
+        @for (o of list; track o.id) {
+            <!-- aca muestro las ordenes de compra y si hace click en la tarjeta tiene que ejecutar: [routerLink]="['/order', {queryParams: {oi: o.id}}]" -->
+        }
+    }
+}@else {
+    @if (authState().data!.role !== 'user') {
+        @if (salesState().loading) {
+            <!-- spiner -->
+        }@else if (salesState().error) {
+            @switch (salesState().error) {
+                @case ('TIMEOUT') {
+                    <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
+                }
+                @case ('UNAVAILABLE') {
+                    <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
+                }
+                @case ('INTERNAL_ERROR') {
+                    <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
+                }
+                @default {
+                    <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+                }
+            }
+        }@else {
+            @let list = salesState().data!;
+            <button (click)="onReload()"><!-- simbolo de actualizar --></button>
+            <!-- muestro -->
+            @for (o of list; track $index) {
+                <!-- aca muestro las ordenes de venta -->
+            }
+        }
+    }@else {
+        <!-- pantalla en blanco o mensaje de que este tipo de cuenta no tiene ventas -->
+        <button (click)="onChangeTemplate()">Volver</button>
+    }
+}

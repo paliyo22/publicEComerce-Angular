@@ -1,0 +1,32 @@
+@if (state().loading) {
+    <!-- spiner -->
+}@else if (state().error) {
+    @switch (state().error) {
+        @case ('RESULT_NOT_FOUND') {
+            <!-- Error interno, nose pudo determinar el resultado de la transaccion. Verifique sus registros de compra, en caso de que no exista contacte a soporte. -->
+        }
+        @case ('RESULT_TIMEOUT') {
+            <!-- No hemos podido confirmar su compra, aguarde unos minutos y verifique sus registros de compra. En caso de que el no exista, contacte a soporte. -->
+        }
+        @case ('TIMEOUT') {
+            <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
+        }
+        @case ('INTERNAL_ERROR') {
+            <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
+        }
+        @default {
+            <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+        }
+    }
+    <button (click)="onReload()">Recargar</button>
+}@else {
+    @let order = state().data!; 
+    <!-- datos de la orden -->
+    @for (i of order.items; track i.productId) {
+        <h2 [routerLink]="['/product', i.productId]">{{i.product}}</h2>
+        <h2 [routerLink]="['/profile', i.seller]">{{i.seller}}</h2>
+    }
+}

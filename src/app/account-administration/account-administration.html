@@ -1,0 +1,24 @@
+<div>
+    <!-- menu desplegable izquierdo que se activa desde html root cuando esta loggeado -->
+    <button
+        [routerLink]="['/account']"
+    >Perfil</button> <!-- accountProfile -->
+    
+    <button
+        [routerLink]="['/account/records']"
+    >Registros</button> <!-- muestra compras a usuarios y tambien ventas al resto. las compras se listan y se puede ver la info completa en /order (usa params para id). order redirije a /error si entra con los 2 parametros o sin ninguno -->
+    
+    <button
+        [routerLink]="['/cart']"
+    >Carrito</button> <!-- muestra el carrito, permite compra de 1 producto o carrito completo -->
+    
+    @if (authState().data!.role !== 'user') {
+        <button
+            [routerLink]="['/account/products']"
+        >Productos</button> <!-- muestra lista de productos de la cuenta loggeada para managment. CRUD -->
+    
+        <button
+            [routerLink]="['/account/balance']"
+        >Balance de cuenta</button> <!-- muestra valance de cuenta. entradas, salidas, variaciones entre fechas y permite retiros -->
+    }
+</div>

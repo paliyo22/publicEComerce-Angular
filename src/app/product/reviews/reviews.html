@@ -1,0 +1,41 @@
+@let list = productState().data!.reviews;
+@let user = authState().data;
+
+@if(!user){
+  <!-- Registrate para poder calificar este producto. -->
+}@else {
+  <!-- Bloque de escritura (Solo si está loggeado y NO ha reseñado) -->
+  @if (!userReview()) {
+    <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()" class="review-form">
+      <h3>Dejar una reseña</h3>
+      <div class="form-group">
+        <label>Puntuación (1 al 10):</label>
+        <input type="number" formControlName="rating" min="1" max="10">
+      </div>
+      <div class="form-group">
+        <label>Comentario (Opcional):</label>
+        <textarea formControlName="comment" maxlength="1000" placeholder="Escribe tu opinión..."></textarea>
+      </div>
+      <button type="submit" [disabled]="reviewForm.invalid">Enviar</button>
+    </form>
+  }
+}
+
+<!-- Listado de reseñas -->
+@if (!list || !list.length) {
+  <!-- Aún no hay opiniones sobre este producto. ¡Sé el primero en calificarlo! -->
+} @else {
+  @for (r of list; track r.username) {
+      <!-- muestra username y calificacion-->
+      <h3 [routerLink]="['/profile', r.username]">{{r.username}}</h3>
+    @if (r.comment) {
+      <!-- muestra comentario si tiene -->
+    }
+    
+    <!-- Botón de eliminación (Solo visible en la reseña propia) -->
+    @if (user && user.username === r.username) {
+      <button (click)="onDelete()">Eliminar</button>
+    }
+  }
+}
+

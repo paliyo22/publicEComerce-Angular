@@ -1,0 +1,27 @@
+@if (searchState().loading) {
+    <!-- spiner -->
+}@else if (searchState().error) {
+    @switch (searchState().error) {
+
+    }
+    <button (click)="onRetry()">Recargar</button>
+}@else {
+    @if (!searchState().data) {
+        <!-- No se encontraron resultados -->
+    }@else {
+        <!-- las dos lista deberian mostrarse en paralelo-->
+        <!-- Productos -->
+        @if (searchState().data!.products.length) {
+            @for (p of searchState().data!.products; track p.id) {
+                <!-- aca toda la tarjeta, o el titulo e imagen, deberia ser "[routerLink]="['/product', p.id]"" -->
+                <button [disabled]="processing().has(p.id)" (click)="onAddToCart(p.id, p.title)"><!-- simbolo de agregar al carrito --></button>
+            }
+        }
+        <!-- Cuentas -->
+        @if (searchState().data!.accounts.length) {
+            @for (username of searchState().data!.accounts; track username) {
+                <h2 [routerLink]="['/profile', username]">{{username}}</h2>
+            }
+        }
+    }
+}

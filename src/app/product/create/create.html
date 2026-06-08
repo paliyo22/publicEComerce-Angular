@@ -1,0 +1,8 @@
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="create-form">
+    
+    <!-- Botón de Envío -->
+    <button type="submit" [disabled]="productForm.invalid || loading()" class="submit-btn">
+        Crear Producto
+    </button>
+    <button [disabled]="loading()" (click)="onCancel()">Cancelar</button>
+</form>

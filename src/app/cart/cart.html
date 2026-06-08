@@ -1,0 +1,50 @@
+@if (cart()){
+    @if (state().loading){
+        <!-- spinner y mensaje de cargando -->
+    }@else if (state().error) {
+        @switch (state().error) {
+            @case ('INTERNAL_ERROR') {
+                <!-- Algo ha fallado, vuelva a intentar o contacte con soporte. -->
+            }
+            @case ('TIMEOUT') {
+                <!-- Error al obtener los datos, vuelva a intentar. -->
+            }
+            @case ('UNAVAILABLE') {
+                <!-- Actualmente se estamos realizando mantenimiento. -->
+            }
+            @default {
+                <!-- ups! algo ha fallado, vuelva a intentar o contacte a soporte. -->
+            }
+        }
+        <button (click)="onRetry()">Recargar</button>
+    }@else {
+        @let cart = state().data;
+        
+        @if (!cart || cart.products.length === 0){
+            <!-- muestra pagina en blanco, se puede agregar "no hay productos actualmente" o algo similar. -->
+        }@else {
+            <button (click)="onDeleteCart()">Vaciar carrito</button>
+            <button (click)="onCheckout()">Comprar carrito</button>
+            <!-- muestra el carito -->
+            @for (p of cart.products; track p.cartProductId) {
+                <h2 [routerLink]="['/product', p.productId]">{{p.title}}</h2>
+                <button [disabled]="processing().has(p.cartProductId)" (click)="onDeleteProduct(p.cartProductId, p.title)">Eliminar</button>
+                <button [disabled]="processing().has(p.cartProductId)" (click)="onCheckout(p)">Realizar compra</button>
+                <!-- al mostrar la cantidad permitir que se pueda cambiar el numero, siempre positivo y mayor a 0,
+                    y si es distinto al original mostrar el boton confirmar para llamar al update -->
+            }
+        }
+    }
+}@else {
+    @if (cartProduct) {
+        <app-checkout
+            [cartProduct]="cartProduct"
+            (cancel)="onCancel()"
+        />
+    }@else {
+        <app-checkout 
+            [cart]="state().data!"
+            (cancel)="onCancel()"
+        />
+    }
+}

@@ -1,0 +1,46 @@
+@if(productListState().loading) {
+    <!-- spiner -->
+}@else if (productListState().error) {
+    @switch (productListState().error) {
+        @case ('TIMEOUT') {
+            <!-- Error al obtener el resultado. Actualice la pagina. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo. -->
+        }
+        @case ('INTERNAL_ERROR') {
+            <!-- Ups! Parece que algo ha fallado, vuelva a intntar. Si el error persiste contacte con soporte. -->
+        }
+        @case ('NETWORK_ERROR') {
+            <!-- Error de coneccion. Checke su conneccion a internet y reintente. -->
+        }
+        @default {
+            <!-- Error interno, vuelva a intentar. Si el error persiste contacte con soporte. -->
+        }
+    }
+    <button (click)="onRetry()">Recargar</button>
+}@else {
+    @let products = productListState().data;
+    @if(products.length > 0){
+        @for (p of products; track p.id) {
+            <h2 [routerLink]="['/product', p.id]">{{p.title}}</h2>
+            <!-- aca mostramos los datos del producto, en base al p.status cambiamos el color de las tarjetas(si se puede) -->
+            @switch (p.status) {
+                @case (productStatus.DELETED) {
+                    <!-- aca solo mostramos boton para restaurar -->
+                    <button [disabled]="processing().has(p.id)" (click)="onRestoreProduct(p.id)">Restaurar</button>
+                }
+                @case (productStatus.BANNED) {
+                    <!-- aca no mostramos nada porque al estar baneado solo podes ver los datos -->  
+                }
+                @default {
+                    <!-- aca mostramos los inputs para los update y un boton para eliminar el producto -->
+                     <!-- boton de ejemplo -->
+                    <button [disabled]="processing().has(p.id)" (click)="onDeleteProduct(p.id)">Eliminar</button> 
+                }
+            }
+        }
+    }@else {
+        <!-- Actualmente no tiene productos publicados. -->
+    }
+}

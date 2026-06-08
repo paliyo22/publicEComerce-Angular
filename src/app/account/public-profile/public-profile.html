@@ -1,0 +1,35 @@
+@if (profileState().loading) {
+    <!-- mostrar spiner y mensaje cargando -->
+}@else if (profileState().error) {
+    @switch (profileState().error) {
+        @case ('INTERNAL_ERROR') {
+            <!-- Algo ha fallado, vuelva a intentar o contacte con soporte. -->
+        }
+        @case ('TIMEOUT') {
+            <!-- Error al obtener los datos, vuelva a intentar. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- Actualmente se estamos realizando mantenimiento. -->
+        }
+        @case ('BAD_REQUEST') {
+            <!-- mensaje de no se ha podido encontrar el usuario -->
+        }
+        @case ('BANNED') {
+            <!-- mensaje de esta cuenta se encuentra banneada -->
+        }
+        @default {
+            <!-- ups! algo ha fallado, vuelva a intentar o contacte a soporte. -->
+        }
+    }
+    <button (click)="onRetry()">Recargar</button>
+}@else {
+    @let profile = profileState().data!;
+    <!-- aca mostrar los datos de la cuenta -->
+    @if (profile.products && profile.products.length > 0) {
+        @for (p of profile.products; track p.id) {
+            <!-- muestro los productos -->
+            <p [routerLink]="['/product', p.id]">{{p.title}}</p>
+            <button [disabled]="processing().has(p.id)" (click)="onAddToCart(p.id, p.title)"><!-- simbolo de agregar al carrito --></button>
+        }
+    }
+}

@@ -1,0 +1,87 @@
+@if (accountState().loading){
+    <!-- mensaje o animacion de cargando -->
+}@else if (accountState().error) {
+    @switch (accountState().error) {
+        @case ('TIMEOUT') {
+            <!-- Error al obtener el resultado. Actualice la pagina. -->
+        }
+        @case ('UNAVAILABLE') {
+            <!-- Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo. -->
+        }
+        @case ('INTERNAL_ERROR') {
+            <!-- Ups! Parece que algo ha fallado, vuelva a intntar. Si el error persiste contacte con soporte. -->
+        }
+        @case ('NETWORK_ERROR') {
+            <!-- Error de coneccion. Checke su coneccion a internet. -->
+        }
+        @case ('EMAIL_NOT_AVAILABLE') {
+            <!-- El email ya está en uso. -->
+        }
+        @case ('USERNAME_NOT_AVAILABLE') {
+            <!-- El nombre de usuario ya está ocupado. -->
+        }
+        <!-- falta agregar los case de los errores generales, pero a fines practicos se pueden descartar ahora -->
+        @default {
+            @if (show() === 'password' || show() === 'cbu'){
+                <!-- Ocurrió un problema al procesar la solicitud. Por motivos de seguridad, ingresa los datos nuevamente. -->  
+            }@else {
+                <!-- Ups! Parece que tuvimos problemas al procesar su solicitud. Intente nuevamente. -->
+            }
+        }
+    }
+    @if (show() === 'password' || show() === 'cbu'){
+        <button (click)="onCleanError()">Volver</button>    
+    }@else if(show() === 'edit'){
+        <button (click)="onCleanError()">Volver</button> 
+    }@else {
+        <button (click)="onReload()">Reintentar</button>
+    }
+}@else {
+    @switch(show()){
+        @case ('profile') {
+            @let account = accountState().data!;
+            <button (click)="onChangeTemplate('edit')">Editar</button>
+            <button (click)="onChangeTemplate('password')">Cambiar contraseña</button>
+            <button (click)="onChangeTemplate('address')">Mis direcciones</button>
+        
+            @if(account.role !== 'user'){
+                <button (click)="onChangeTemplate('cbu')">Cambiar cbu</button>
+                <button (click)="onChangeTemplate('stores')">Mis locales</button>
+            }
+            @if (account.businessProfile) {
+                <!-- aca se muestra los datos si es una cuenta business -->
+            }@else {
+                <!-- aca se muestra los datos si es una cuenta user -->
+            }
+        }
+        @case ('edit') {
+            @if (accountState().data!.businessProfile) {
+                <!-- aca se muestra el forms si es una cuenta business -->
+            }@else {
+                <!-- aca se muestra el forms si es una cuenta user -->
+            }
+            <button (click)="onConfirm()">Confirmar</button>
+            <button (click)="onCancel()">Cancelar</button>
+        }
+        @case ('password') {
+            <!-- aca se muestra el forms para cambiar la contraseña -->
+            <button (click)="onConfirm()">Confirmar</button>
+            <button (click)="onCancel()">Cancelar</button>
+        }
+        @case ('cbu') {
+            <!-- aca se muestra el forms para cambiar el cbu -->
+            <button (click)="onConfirm()">Confirmar</button>
+            <button (click)="onCancel()">Cancelar</button>
+        }
+        @case ('address') {
+            <app-address
+                (onClose)="onChangeTemplate('profile')"
+            />
+        }
+        @case ('stores') {
+            <app-store
+                (onClose)="onChangeTemplate('profile')"
+            />
+        }
+    }
+}
