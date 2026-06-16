@@ -3,10 +3,14 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { AuthService } from '../../account/services/auth/auth-service';
 import { ProductService } from '../services/product/product-service';
 import { RouterLink } from "@angular/router";
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-product-reviews',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule, RouterLink, 
+    CommonModule
+  ],
   templateUrl: './reviews.html',
   styleUrl: './reviews.css',
   changeDetection: ChangeDetectionStrategy.OnPush

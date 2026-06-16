@@ -1,1 +1,10 @@
-<button [routerLink]="['/']"></button>
+<div class="not-found">
+  <div class="not-found__code" aria-hidden="true">404</div>
+  <h1 class="not-found__title">Página no encontrada</h1>
+  <p class="not-found__desc">
+    La página que buscás no existe o fue eliminada.
+  </p>
+  <button type="button" class="btn btn-primary" [routerLink]="['/']">
+    Volver al inicio
+  </button>
+</div>

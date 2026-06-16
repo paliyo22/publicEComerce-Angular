@@ -1,0 +1,41 @@
+/* ============================================================
+   Not Found page
+   ============================================================ */
+:host {
+  display: block;
+}
+
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.not-found__code {
+  font-size: clamp(5rem, 20vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-border);
+  letter-spacing: -0.05em;
+  user-select: none;
+}
+
+.not-found__title {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.not-found__desc {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  max-width: 28rem;
+  line-height: 1.6;
+  margin: 0;
+}

@@ -13,11 +13,13 @@ import { StoreService } from './account/store/store-service';
 import { validateLog } from '../schemas/account-schemas';
 import { AccountAdministration } from "./account-administration/account-administration";
 import { Nav } from './nav/nav';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLinkWithHref, AccountAdministration, Nav],
+  imports: [RouterOutlet, RouterLinkWithHref, AccountAdministration, 
+    Nav, ReactiveFormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -27,7 +29,17 @@ export class App {
   private authService = inject(AuthService);
   protected authState = this.authService.state;
   private router = inject(Router);
+  private readonly fb = inject(FormBuilder)
   private flag = false;
+
+  protected logForm: FormGroup = this.fb.group({
+    account: ['', [Validators.required, Validators.maxLength(100)]],
+    password: ['', [Validators.required]]
+  });
+
+  protected showLogin = signal(false);
+  protected showMenu = signal(false);   
+  protected searchQuery = signal('');    
 
   // Services to reset
   private accountService = inject(AccountService);
@@ -61,12 +73,36 @@ export class App {
   };
 
   onLogIn(){
-    const result = validateLog();
+    if(this.logForm.invalid){
+      this.logForm.markAllAsTouched();
+      return;
+    };
+
+    const result = validateLog(this.logForm.value);
 
     if(result.success){
       this.authService.logIn(result.output);
+      this.showLogin.set(false);
     };
   };
 
+  toggleLogin(){
+    this.showLogin.update((value) => !value);
+  };
 
+  toggleMenu(){
+    this.showMenu.update((value) => !value);
+  };
+
+  onLogOut(){
+    this.showMenu.set(false);
+    this.authService.logOut();
+  };
+
+  onSearch(){
+    const query = this.searchQuery().trim();
+    if(!query) return;
+    this.router.navigate(['/search', query]);
+    this.searchQuery.set('');
+  };
 }

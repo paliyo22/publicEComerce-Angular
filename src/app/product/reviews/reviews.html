@@ -1,41 +1,96 @@
 @let list = productState().data!.reviews;
 @let user = authState().data;
 
-@if(!user){
-  <!-- Registrate para poder calificar este producto. -->
-}@else {
+@if (!user) {
+  <p class="reviews__login-prompt">
+    <a class="reviews__login-link" routerLink="/account">Registrate o iniciá sesión</a>
+    para poder calificar este producto.
+  </p>
+} @else {
   <!-- Bloque de escritura (Solo si está loggeado y NO ha reseñado) -->
   @if (!userReview()) {
     <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()" class="review-form">
-      <h3>Dejar una reseña</h3>
+      <h3 class="review-form__title">Dejar una reseña</h3>
+
       <div class="form-group">
-        <label>Puntuación (1 al 10):</label>
-        <input type="number" formControlName="rating" min="1" max="10">
+        <label class="review-form__label" for="review-rating">Puntuación (1 al 10):</label>
+        <input
+          id="review-rating"
+          class="review-form__input"
+          type="number"
+          formControlName="rating"
+          min="1"
+          max="10"
+          placeholder="Ej: 8"
+        />
+        @if (reviewForm.get('rating')?.invalid && reviewForm.get('rating')?.touched) {
+          <p class="field-error">Ingresá un valor entre 1 y 10.</p>
+        }
       </div>
+
       <div class="form-group">
-        <label>Comentario (Opcional):</label>
-        <textarea formControlName="comment" maxlength="1000" placeholder="Escribe tu opinión..."></textarea>
+        <label class="review-form__label" for="review-comment">Comentario (Opcional):</label>
+        <textarea
+          id="review-comment"
+          class="review-form__textarea"
+          formControlName="comment"
+          maxlength="1000"
+          rows="4"
+          placeholder="Escribe tu opinión..."
+        ></textarea>
+        @if (reviewForm.get('comment')?.errors?.['maxlength']) {
+          <p class="field-error">El comentario no puede superar los 1000 caracteres.</p>
+        }
       </div>
-      <button type="submit" [disabled]="reviewForm.invalid">Enviar</button>
+
+      <button type="submit" class="btn btn-primary" [disabled]="reviewForm.invalid">
+        Enviar reseña
+      </button>
     </form>
   }
 }
 
 <!-- Listado de reseñas -->
-@if (!list || !list.length) {
-  <!-- Aún no hay opiniones sobre este producto. ¡Sé el primero en calificarlo! -->
-} @else {
-  @for (r of list; track r.username) {
-      <!-- muestra username y calificacion-->
-      <h3 [routerLink]="['/profile', r.username]">{{r.username}}</h3>
-    @if (r.comment) {
-      <!-- muestra comentario si tiene -->
-    }
-    
-    <!-- Botón de eliminación (Solo visible en la reseña propia) -->
-    @if (user && user.username === r.username) {
-      <button (click)="onDelete()">Eliminar</button>
-    }
-  }
-}
+<section class="reviews" aria-label="Reseñas del producto">
+  <h3 class="reviews__title">Opiniones</h3>
 
+  @if (!list || !list.length) {
+    <p class="reviews__empty">
+      Aún no hay opiniones sobre este producto. ¡Sé el primero en calificarlo!
+    </p>
+  } @else {
+    <ul class="reviews__list">
+      @for (r of list; track r.username) {
+        <li class="review-item">
+          <div class="review-item__header">
+            <a
+              class="review-item__username"
+              [routerLink]="['/profile', r.username]"
+            >{{ r.username }}</a>
+            <span
+              class="review-item__rating"
+              aria-label="Calificación: {{ r.rating }} de 10"
+            >{{ r.rating }}<span class="review-item__rating-max">/10</span></span>
+          </div>
+
+          @if (r.comment) {
+            <p class="review-item__comment">{{ r.comment }}</p>
+          }
+
+          <p class="review-item__date">{{ r.created | date:'dd/MM/yyyy' }}</p>
+
+          <!-- Botón de eliminación (Solo visible en la reseña propia) -->
+          @if (user && user.username === r.username) {
+            <button
+              type="button"
+              class="btn btn-ghost review-item__delete"
+              (click)="onDelete()"
+            >
+              Eliminar mi reseña
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

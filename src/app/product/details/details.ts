@@ -5,16 +5,19 @@ import { ProductService } from '../services/product/product-service';
 import { AuthService } from '../../account/services/auth/auth-service';
 import { AccountProductsService } from '../../account/account-products/account-products-service';
 import { Router, RouterLink } from '@angular/router';
+import { CartService } from '../../cart/cart-service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-details',
-  imports: [ProductUpdate, ProductReviews, RouterLink],
+  imports: [ProductUpdate, ProductReviews, RouterLink, FormsModule],
   templateUrl: './details.html',
   styleUrl: './details.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductDetails implements OnInit{
   private readonly router = inject(Router);
+  private readonly cartService = inject(CartService);
   private readonly productService = inject(ProductService);
   private readonly authService = inject(AuthService);
   private readonly accountProductsService = inject(AccountProductsService);
@@ -23,6 +26,8 @@ export class ProductDetails implements OnInit{
   protected id = input.required<string>();
 
   protected editing = signal(false);
+  protected processing = signal(false); 
+  cartAmount: number = 1;
 
   constructor(){
     effect(() => {
@@ -47,6 +52,17 @@ export class ProductDetails implements OnInit{
   async onDelete(){
     await this.accountProductsService.deleteProduct(this.id());
   }
+
+  async onAddToCart(productId: string, amount: number, title: string){
+    if(amount < 1) return; 
+
+    const result = await this.cartService.addToCart(productId, Math.round(amount));
+    if(result){
+      // alerta de error al intentar agregar el producto al carrito
+    }else{
+      // alerta de producto "title" agregado
+    };
+  };
 
   onRetry() {
     if(this.productState().data){

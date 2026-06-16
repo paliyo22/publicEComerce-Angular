@@ -1,11 +1,145 @@
-<!-- Titulo de la pagina -->
-@if (authState().data) {
-    <!-- remplaza los botones por un menu desplegable que esta en <app-account-administration/> -->
-}@else {
-    <button [routerLink]="['/sign-up']">Registrarse</button>
-    <!-- desplegable con los campos usuario y contraseña para iniciar sesion. -->
-}
-<!-- buscador que al hacer click en la lupita [routerLink]="['/search', input]" -->
-<app-nav/>
+<header class="app-header">
+  <div class="app-header__inner container">
 
-<router-outlet/>
+    <!-- Titulo de la pagina -->
+    <a class="app-header__brand" [routerLink]="['/']">{{ title() }}</a>
+
+    <!-- buscador que al hacer click en la lupita [routerLink]="['/search', input]" -->
+    <form class="search" role="search" (ngSubmit)="onSearch()">
+      <label class="sr-only" for="search-input">Buscar productos</label>
+      <input
+        id="search-input"
+        class="search__input"
+        type="search"
+        name="search"
+        placeholder="Buscar productos..."
+        autocomplete="off"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+      />
+      <button class="search__button" type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+    </form>
+
+    <!-- Controles de autenticacion -->
+    <div class="app-header__auth">
+      @if (authState().data) {
+        <!-- remplaza los botones por un menu desplegable que esta en <app-account-administration/> -->
+        <div class="account-menu">
+          <button
+            class="account-menu__trigger btn btn-outline"
+            type="button"
+            [attr.aria-expanded]="showMenu()"
+            aria-haspopup="true"
+            (click)="toggleMenu()"
+          >
+            <span>{{ authState().data!.username }}</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          @if (showMenu()) {
+            <div class="account-menu__panel" (click)="toggleMenu()">
+              <app-account-administration/>
+              <button class="btn btn-ghost account-menu__logout" type="button" (click)="onLogOut()">
+                Cerrar sesion
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <button class="btn btn-outline" type="button" [routerLink]="['/sign-up']">
+          Registrarse
+        </button>
+
+        <!-- desplegable con los campos usuario y contraseña para iniciar sesion. -->
+        <div class="login">
+          <button
+            class="btn btn-primary"
+            type="button"
+            [attr.aria-expanded]="showLogin()"
+            (click)="toggleLogin()"
+          >
+            Iniciar sesion
+          </button>
+
+          @if (showLogin()) {
+            <form class="login__panel" [formGroup]="logForm" (ngSubmit)="onLogIn()">
+              <h2 class="login__title">Iniciar sesion</h2>
+
+              <div class="login__field">
+                <label for="login-account">Usuario o email</label>
+                <input
+                  id="login-account"
+                  type="text"
+                  formControlName="account"
+                  autocomplete="username"
+                  placeholder="tu usuario o email"
+                />
+                @if (logForm.get('account')?.touched && logForm.get('account')?.invalid) {
+                  <p class="field-error">Ingresa tu usuario o email.</p>
+                }
+              </div>
+
+              <div class="login__field">
+                <label for="login-password">Contraseña</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                />
+                @if (logForm.get('password')?.touched && logForm.get('password')?.invalid) {
+                  <p class="field-error">Ingresa tu contraseña.</p>
+                }
+              </div>
+
+              @if (authState().error) {
+                <p class="field-error" role="alert">
+                  @switch (authState().error) {
+                    @case ('NETWORK_ERROR') { No pudimos conectar. Reintenta. }
+                    @default { Usuario o contraseña incorrectos. }
+                  }
+                </p>
+              }
+
+              <button
+                class="btn btn-primary btn-block"
+                type="submit"
+                [disabled]="authState().loading"
+              >
+                @if (authState().loading) {
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span>Ingresando...</span>
+                } @else {
+                  <span>Ingresar</span>
+                }
+              </button>
+            </form>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Navegacion por categorias -->
+  <nav class="app-nav" aria-label="Categorias">
+    <div class="container">
+      <app-nav/>
+    </div>
+  </nav>
+</header>
+
+<main class="app-main container">
+  <router-outlet/>
+</main>

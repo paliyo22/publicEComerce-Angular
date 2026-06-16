@@ -1,37 +1,304 @@
 <div class="create-account">
-    @if (state().loading) {
-        <!-- spiner con mensaje de cargando -->
-    }@else if (state().error) {
-        @switch(state().error){
-            @case ('EMAIL_NOT_AVAILABLE') { 
-                <!-- mostrar alerta de email no disponible. -->
-            }
-            @case ('USERNAME_NOT_AVAILABLE') {
-                <!-- mostrar alerta de username no disponible. -->
-            }
-            @default{
-                <!-- mostrar mensaje de algo ha salido mal, reintente. --> 
-            } 
+  @if (state().loading) {
+    <div class="create-account__state">
+      <span class="spinner spinner--brand" role="status" aria-label="Procesando"></span>
+      <p class="create-account__state-msg">Creando tu cuenta, aguardá un momento...</p>
+    </div>
+  } @else if (state().error) {
+    <div class="create-account__state">
+      @switch (state().error) {
+        @case ('EMAIL_NOT_AVAILABLE') {
+          <p class="create-account__alert create-account__alert--error">
+            El correo electrónico ingresado ya está en uso. Intentá con otro.
+          </p>
         }
-        <button (click)="onCleanError()">Volver</button>
-    }@else {
-        @switch (show()) {
-            @case ('none') {
-                <!-- aca un mensage generico para que el usuario decida si quiere crear una cuenta normal(user) o empresarial(business) -->
-                <button (click)="onSelectAccount('user')">Cuenta</button>
-                <button (click)="onSelectAccount('business')">Empresarial</button>
-            }
-            @case ('business') {
-                <!-- aca se muestra el forms para crear la cuenta empresarial(business) -->
-                <button (click)="onConfirm()">Confirmar</button>
-                <button (click)="onSelectAccount('none')">Cancelar</button>
-            }
-            @case ('user') {
-                <!-- aca se muestra el forms para crear la cuenta normal(user) -->
-                <button (click)="onConfirm()">Confirmar</button>
-                <button (click)="onSelectAccount('none')">Cancelar</button>
-            }
-        }   
-    }
-</div>
+        @case ('USERNAME_NOT_AVAILABLE') {
+          <p class="create-account__alert create-account__alert--error">
+            El nombre de usuario ya está ocupado. Elegí uno diferente.
+          </p>
+        }
+        @default {
+          <p class="create-account__alert create-account__alert--error">
+            Algo ha salido mal. Por favor, reintentá en unos instantes.
+          </p>
+        }
+      }
+      <button type="button" class="btn btn-outline" (click)="onCleanError()">Volver</button>
+    </div>
+  } @else {
+    @switch (show()) {
+      @case ('none') {
+        <div class="create-account__selector">
+          <div class="create-account__intro">
+            <h2 class="create-account__intro-title">Crear una cuenta</h2>
+            <p class="create-account__intro-desc">
+              Elegí el tipo de cuenta que querés registrar.
+            </p>
+          </div>
+          <div class="create-account__options">
+            <button
+              type="button"
+              class="account-option"
+              (click)="onSelectAccount('user')"
+              aria-label="Crear cuenta personal"
+            >
+              <span class="account-option__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span class="account-option__label">Cuenta personal</span>
+              <span class="account-option__desc">Para comprar y vender como persona.</span>
+            </button>
 
+            <button
+              type="button"
+              class="account-option"
+              (click)="onSelectAccount('business')"
+              aria-label="Crear cuenta empresarial"
+            >
+              <span class="account-option__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2"/>
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                  <line x1="12" y1="12" x2="12" y2="16"/>
+                  <line x1="10" y1="14" x2="14" y2="14"/>
+                </svg>
+              </span>
+              <span class="account-option__label">Cuenta empresarial</span>
+              <span class="account-option__desc">Para negocios, marcas o tiendas.</span>
+            </button>
+          </div>
+        </div>
+      }
+
+      @case ('business') {
+        <form [formGroup]="accountForm" (ngSubmit)="onConfirm()" class="create-form">
+          <h2 class="create-form__title">Cuenta empresarial</h2>
+
+          <div class="form-group">
+            <label for="ca-title">Nombre del negocio *</label>
+            <input
+              id="ca-title"
+              type="text"
+              formControlName="title"
+              placeholder="Ej: Tienda Electrónica Sur"
+              autocomplete="organization"
+            />
+            @if (accountForm.get('title')?.invalid && accountForm.get('title')?.touched) {
+              <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="ca-bio">Descripción <span class="create-form__optional">(opcional)</span></label>
+            <textarea
+              id="ca-bio"
+              formControlName="bio"
+              rows="3"
+              placeholder="Contá brevemente a qué se dedica tu negocio..."
+            ></textarea>
+            @if (accountForm.get('bio')?.invalid && accountForm.get('bio')?.touched) {
+              <p class="field-error">Mínimo 10 caracteres.</p>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca-b-email">Correo electrónico *</label>
+              <input
+                id="ca-b-email"
+                type="email"
+                formControlName="email"
+                placeholder="contacto@negocio.com"
+                autocomplete="email"
+              />
+              @if (accountForm.get('email')?.invalid && accountForm.get('email')?.touched) {
+                <p class="field-error">Ingresá un email válido.</p>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="ca-b-username">Nombre de usuario *</label>
+              <input
+                id="ca-b-username"
+                type="text"
+                formControlName="username"
+                placeholder="mi_negocio"
+                autocomplete="username"
+              />
+              @if (accountForm.get('username')?.invalid && accountForm.get('username')?.touched) {
+                <p class="field-error">Máximo 50 caracteres.</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca-b-phone">Teléfono *</label>
+              <input
+                id="ca-b-phone"
+                type="tel"
+                formControlName="phone"
+                placeholder="+54 9 11 1234-5678"
+                autocomplete="tel"
+              />
+              @if (accountForm.get('phone')?.invalid && accountForm.get('phone')?.touched) {
+                <p class="field-error">Máximo 50 caracteres.</p>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="ca-b-cbu">CBU <span class="create-form__optional">(opcional)</span></label>
+              <input
+                id="ca-b-cbu"
+                type="text"
+                formControlName="cbu"
+                placeholder="22 dígitos"
+                autocomplete="off"
+                maxlength="22"
+              />
+              @if (accountForm.get('cbu')?.invalid && accountForm.get('cbu')?.touched) {
+                <p class="field-error">El CBU debe tener exactamente 22 dígitos.</p>
+              }
+            </div>
+          </div>
+
+          <div class="create-form__actions">
+            <button
+              type="submit"
+              class="btn btn-primary btn-block"
+              [disabled]="accountForm.invalid"
+            >Confirmar</button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-block"
+              (click)="onSelectAccount('none')"
+            >Cancelar</button>
+          </div>
+        </form>
+      }
+
+      @case ('user') {
+        <form [formGroup]="accountForm" (ngSubmit)="onConfirm()" class="create-form">
+          <h2 class="create-form__title">Cuenta personal</h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca-firstname">Nombre *</label>
+              <input
+                id="ca-firstname"
+                type="text"
+                formControlName="firstname"
+                placeholder="Juan"
+                autocomplete="given-name"
+              />
+              @if (accountForm.get('firstname')?.invalid && accountForm.get('firstname')?.touched) {
+                <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="ca-lastname">Apellido *</label>
+              <input
+                id="ca-lastname"
+                type="text"
+                formControlName="lastname"
+                placeholder="Pérez"
+                autocomplete="family-name"
+              />
+              @if (accountForm.get('lastname')?.invalid && accountForm.get('lastname')?.touched) {
+                <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca-email">Correo electrónico *</label>
+              <input
+                id="ca-email"
+                type="email"
+                formControlName="email"
+                placeholder="juan@ejemplo.com"
+                autocomplete="email"
+              />
+              @if (accountForm.get('email')?.invalid && accountForm.get('email')?.touched) {
+                <p class="field-error">Ingresá un email válido.</p>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="ca-username">Nombre de usuario *</label>
+              <input
+                id="ca-username"
+                type="text"
+                formControlName="username"
+                placeholder="juanperez99"
+                autocomplete="username"
+              />
+              @if (accountForm.get('username')?.invalid && accountForm.get('username')?.touched) {
+                <p class="field-error">Máximo 50 caracteres.</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca-birth">Fecha de nacimiento <span class="create-form__optional">(opcional)</span></label>
+              <input
+                id="ca-birth"
+                type="date"
+                formControlName="birth"
+                autocomplete="bday"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="ca-phone">Teléfono <span class="create-form__optional">(opcional)</span></label>
+              <input
+                id="ca-phone"
+                type="tel"
+                formControlName="phone"
+                placeholder="+54 9 11 1234-5678"
+                autocomplete="tel"
+              />
+              @if (accountForm.get('phone')?.invalid && accountForm.get('phone')?.touched) {
+                <p class="field-error">Máximo 50 caracteres.</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ca-cbu">CBU <span class="create-form__optional">(opcional)</span></label>
+            <input
+              id="ca-cbu"
+              type="text"
+              formControlName="cbu"
+              placeholder="22 dígitos"
+              autocomplete="off"
+              maxlength="22"
+            />
+            @if (accountForm.get('cbu')?.invalid && accountForm.get('cbu')?.touched) {
+              <p class="field-error">El CBU debe tener exactamente 22 dígitos.</p>
+            }
+          </div>
+
+          <div class="create-form__actions">
+            <button
+              type="submit"
+              class="btn btn-primary btn-block"
+              [disabled]="accountForm.invalid"
+            >Confirmar</button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-block"
+              (click)="onSelectAccount('none')"
+            >Cancelar</button>
+          </div>
+        </form>
+      }
+    }
+  }
+</div>

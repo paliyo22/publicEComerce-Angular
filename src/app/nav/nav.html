@@ -1,4 +1,9 @@
-<button [routerLink]="['/']">Inicio</button>
-<button [routerLink]="['/category/tecnology']">Tecnologia</button>
-<button [routerLink]="['/category/furniture']">Muebles</button>
-<!-- ...etc -->
+<button type="button" [routerLink]="['/']" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+  Inicio
+</button>
+<button type="button" [routerLink]="['/category/tecnology']" routerLinkActive="is-active">
+  Tecnología
+</button>
+<button type="button" [routerLink]="['/category/books']" routerLinkActive="is-active">
+  Libros
+</button>

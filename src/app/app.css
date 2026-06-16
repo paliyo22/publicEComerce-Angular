@@ -1,0 +1,180 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header__inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: var(--header-height);
+  padding-block: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.app-header__brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* ---------- Search ---------- */
+.search {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 240px;
+  min-width: 180px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.search__input {
+  border: none;
+  border-radius: 0;
+  flex: 1;
+}
+
+.search__input:focus {
+  box-shadow: none;
+}
+
+.search__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.875rem;
+  color: var(--color-primary-contrast);
+  background-color: var(--color-primary);
+  transition: background-color 0.15s ease;
+}
+
+.search__button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* ---------- Auth controls ---------- */
+.app-header__auth {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+/* Shared dropdown wrapper */
+.login,
+.account-menu {
+  position: relative;
+}
+
+/* Login dropdown panel */
+.login__panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.login__title {
+  font-size: 1.0625rem;
+}
+
+.login__field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Account dropdown menu */
+.account-menu__trigger {
+  max-width: 12rem;
+}
+
+.account-menu__trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.account-menu__logout {
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+  color: var(--color-danger);
+}
+
+/* ---------- Category nav ---------- */
+.app-nav {
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.app-nav .container {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-block: 0.5rem;
+  overflow-x: auto;
+}
+
+/* ---------- Main routed content ---------- */
+.app-main {
+  display: block;
+  padding-block: 1.5rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .app-header__inner {
+    gap: 0.75rem;
+  }
+
+  .search {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .login__panel {
+    width: min(20rem, calc(100vw - 2rem));
+  }
+}

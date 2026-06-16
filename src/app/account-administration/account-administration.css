@@ -1,0 +1,53 @@
+/* ============================================================
+   Account Administration dropdown menu
+   Rendered inside .account-menu__panel in app.html
+   ============================================================ */
+:host {
+  display: block;
+}
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.admin-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.admin-menu__item:hover {
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+}
+
+.admin-menu__item--active {
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.admin-menu__item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.admin-menu__item--active svg,
+.admin-menu__item:hover svg {
+  opacity: 1;
+}
+
+.admin-menu__divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin-block: 0.375rem;
+}

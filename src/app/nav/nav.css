@@ -1,0 +1,25 @@
+/* Category navigation (rendered inside the app header) */
+:host {
+  display: contents;
+}
+
+button {
+  padding: 0.4rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+button:hover {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+}
+
+button.is-active {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  font-weight: 600;
+}

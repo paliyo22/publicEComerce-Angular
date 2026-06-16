@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AuthService } from '../account/services/auth/auth-service';
-import { RouterLink } from "@angular/router";
+import { RouterLink, RouterLinkActive } from "@angular/router";
 
 
 @Component({
   selector: 'app-account-administration',
-  imports: [RouterLink],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './account-administration.html',
   styleUrl: './account-administration.css',
   changeDetection: ChangeDetectionStrategy.OnPush
