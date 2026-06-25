@@ -5,6 +5,7 @@ import { CatalogService } from '../product/services/catalog/catalog-service';
 import { Featured } from '../product/featured/featured';
 import { FeaturedService } from '../product/featured/featured-service';
 import { CartService } from '../cart/cart-service';
+import { AuthService } from '../account/services/auth/auth-service';
 
 @Component({
   selector: 'app-home',
@@ -17,6 +18,7 @@ export class Home {
   private readonly router = inject(Router);
   private readonly catalogService = inject(CatalogService);
   private readonly featuredService = inject(FeaturedService);
+  protected readonly authState = inject(AuthService).state;
   
   protected catalogState = this.catalogService.state;  
   private readonly limit = 20;
@@ -24,12 +26,13 @@ export class Home {
   protected p = input<number>();
   protected processing = signal(new Set<string>());
   protected maxPages = computed(() => Math.ceil(this.catalogState().total / this.limit));
+  protected currentPage = computed(() => this.p() ? Number(this.p()) : 1);
  
   constructor(){
     this.catalogService.reset();
     this.featuredService.reset();
     effect(() => {
-      const page = this.p() ?? 1;
+      const page = this.currentPage();
       if(page < 1){
         this.router.navigate(['/']);
         return;
@@ -59,12 +62,12 @@ export class Home {
         this.catalogService.getProductList(this.limit, offset);  
       };
     }else{
-      this.catalogService.getTotalProducts(this.limit);
+      this.catalogService.getTotalProducts(this.limit, offset);
     };    
   };
 
   getVisiblePages(): (number | string)[] {
-    const current = this.p() ?? 1;
+    const current = this.currentPage();
     const total = this.maxPages();
     const pages: (number | string)[] = [];
     

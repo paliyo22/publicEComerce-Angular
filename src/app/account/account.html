@@ -1,87 +1,554 @@
-@if (accountState().loading){
-    <!-- mensaje o animacion de cargando -->
-}@else if (accountState().error) {
-    @switch (accountState().error) {
+<div class="account">
+
+  <!-- ============================================================
+       Estado: cargando
+       ============================================================ -->
+  @if (accountState().loading) {
+    <div class="account__state">
+      <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando cuenta"></span>
+      <p class="account__state-msg">Cargando tu cuenta...</p>
+    </div>
+
+  <!-- ============================================================
+       Estado: error
+       ============================================================ -->
+  } @else if (accountState().error) {
+    <div class="account__state">
+      @switch (accountState().error) {
         @case ('TIMEOUT') {
-            <!-- Error al obtener el resultado. Actualice la pagina. -->
+          <p class="alert alert--error">
+            No se pudo obtener la información. Por favor, actualizá la página.
+          </p>
         }
         @case ('UNAVAILABLE') {
-            <!-- Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo. -->
+          <p class="alert alert--error">
+            Estamos realizando tareas de mantenimiento. Aguardá unos minutos y volvé a intentarlo.
+          </p>
         }
         @case ('INTERNAL_ERROR') {
-            <!-- Ups! Parece que algo ha fallado, vuelva a intntar. Si el error persiste contacte con soporte. -->
+          <p class="alert alert--error">
+            Algo ha fallado. Volvé a intentarlo y si el problema persiste, contactá con soporte.
+          </p>
         }
         @case ('NETWORK_ERROR') {
-            <!-- Error de coneccion. Checke su coneccion a internet. -->
+          <p class="alert alert--error">
+            Error de conexión. Verificá tu conexión a internet e intentá nuevamente.
+          </p>
         }
         @case ('EMAIL_NOT_AVAILABLE') {
-            <!-- El email ya está en uso. -->
+          <p class="alert alert--error">
+            El correo electrónico ingresado ya está en uso. Intentá con otro.
+          </p>
         }
         @case ('USERNAME_NOT_AVAILABLE') {
-            <!-- El nombre de usuario ya está ocupado. -->
+          <p class="alert alert--error">
+            El nombre de usuario ya está ocupado. Elegí uno diferente.
+          </p>
         }
-        <!-- falta agregar los case de los errores generales, pero a fines practicos se pueden descartar ahora -->
         @default {
-            @if (show() === 'password' || show() === 'cbu'){
-                <!-- Ocurrió un problema al procesar la solicitud. Por motivos de seguridad, ingresa los datos nuevamente. -->  
-            }@else {
-                <!-- Ups! Parece que tuvimos problemas al procesar su solicitud. Intente nuevamente. -->
+          @if (show() === 'password' || show() === 'cbu') {
+            <p class="alert alert--error">
+              Ocurrió un problema al procesar la solicitud. Por motivos de seguridad, ingresá los datos nuevamente.
+            </p>
+          } @else {
+            <p class="alert alert--error">
+              Ups, tuvimos problemas al procesar tu solicitud. Intentá nuevamente.
+            </p>
+          }
+        }
+      }
+
+      @if (show() === 'password' || show() === 'cbu' || show() === 'edit') {
+        <button type="button" class="btn btn-ghost" (click)="onCleanError()">Volver</button>
+      } @else {
+        <button type="button" class="btn btn-primary" (click)="onReload()">Reintentar</button>
+      }
+    </div>
+
+  <!-- ============================================================
+       Contenido principal
+       ============================================================ -->
+  } @else {
+    @switch (show()) {
+
+      <!-- --------------------------------------------------------
+           Vista: perfil
+           -------------------------------------------------------- -->
+      @case ('profile') {
+        @let account = accountState().data!;
+
+        <div class="account__profile">
+
+          <!-- Encabezado con avatar y datos principales -->
+          <div class="account__header card">
+            <div class="card__body account__header-body">
+              <div class="account__avatar" aria-hidden="true">
+                @if (account.businessProfile) {
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                    <line x1="12" y1="12" x2="12" y2="16"/>
+                    <line x1="10" y1="14" x2="14" y2="14"/>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                }
+              </div>
+
+              <div class="account__header-info">
+                @if (account.businessProfile) {
+                  <h1 class="account__display-name">{{ account.businessProfile.title }}</h1>
+                  <p class="account__username text-muted">&#64;{{ account.username }}</p>
+                  @if (account.businessProfile.bio) {
+                    <p class="account__bio">{{ account.businessProfile.bio }}</p>
+                  }
+                } @else {
+                  <h1 class="account__display-name">{{ account.userProfile!.firstname }} {{ account.userProfile!.lastname }}</h1>
+                  <p class="account__username text-muted">&#64;{{ account.username }}</p>
+                }
+                <p class="account__email text-muted">{{ account.email }}</p>
+                @if (account.businessProfile) {
+                  <span class="badge badge--primary account__role-badge">Cuenta empresarial</span>
+                } @else {
+                  <span class="badge account__role-badge">Cuenta personal</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Datos adicionales de la cuenta -->
+          <div class="account__details card">
+            <div class="card__body">
+              <h2 class="section-title">Información de la cuenta</h2>
+
+              @if (account.businessProfile) {
+                <dl class="account__data-list">
+                  <div class="account__data-item">
+                    <dt>Teléfono</dt>
+                    <dd>{{ account.businessProfile.phone || '—' }}</dd>
+                  </div>
+                  <div class="account__data-item">
+                    <dt>Correo electrónico</dt>
+                    <dd>{{ account.email }}</dd>
+                  </div>
+                  <div class="account__data-item">
+                    <dt>Nombre de usuario</dt>
+                    <dd>&#64;{{ account.username }}</dd>
+                  </div>
+                </dl>
+              } @else {
+                <dl class="account__data-list">
+                  <div class="account__data-item">
+                    <dt>Nombre</dt>
+                    <dd>{{ account.userProfile!.firstname }} {{ account.userProfile!.lastname }}</dd>
+                  </div>
+                  <div class="account__data-item">
+                    <dt>Correo electrónico</dt>
+                    <dd>{{ account.email }}</dd>
+                  </div>
+                  <div class="account__data-item">
+                    <dt>Nombre de usuario</dt>
+                    <dd>&#64;{{ account.username }}</dd>
+                  </div>
+                  @if (account.userProfile!.birth) {
+                    <div class="account__data-item">
+                      <dt>Fecha de nacimiento</dt>
+                      <dd>{{ account.userProfile!.birth | date:'dd/MM/yyyy' : 'UTC' }}</dd>
+                    </div>
+                  }
+                  @if (account.userProfile!.phone) {
+                    <div class="account__data-item">
+                      <dt>Teléfono</dt>
+                      <dd>{{ account.userProfile!.phone }}</dd>
+                    </div>
+                  }
+                </dl>
+              }
+            </div>
+          </div>
+
+          <!-- Acciones de la cuenta -->
+          <div class="account__actions">
+            <button type="button" class="btn btn-secondary account__action-btn" (click)="onChangeTemplate('edit')">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Editar perfil
+            </button>
+
+            <button type="button" class="btn btn-ghost account__action-btn" (click)="onChangeTemplate('password')">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Cambiar contraseña
+            </button>
+
+            <button type="button" class="btn btn-ghost account__action-btn" (click)="onChangeTemplate('address')">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              Mis direcciones
+            </button>
+
+            @if (account.role !== 'user') {
+              <button type="button" class="btn btn-ghost account__action-btn" (click)="onChangeTemplate('cbu')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                Cambiar CBU
+              </button>
+
+              <button type="button" class="btn btn-ghost account__action-btn" (click)="onChangeTemplate('stores')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Mis locales
+              </button>
             }
-        }
-    }
-    @if (show() === 'password' || show() === 'cbu'){
-        <button (click)="onCleanError()">Volver</button>    
-    }@else if(show() === 'edit'){
-        <button (click)="onCleanError()">Volver</button> 
-    }@else {
-        <button (click)="onReload()">Reintentar</button>
-    }
-}@else {
-    @switch(show()){
-        @case ('profile') {
-            @let account = accountState().data!;
-            <button (click)="onChangeTemplate('edit')">Editar</button>
-            <button (click)="onChangeTemplate('password')">Cambiar contraseña</button>
-            <button (click)="onChangeTemplate('address')">Mis direcciones</button>
-        
-            @if(account.role !== 'user'){
-                <button (click)="onChangeTemplate('cbu')">Cambiar cbu</button>
-                <button (click)="onChangeTemplate('stores')">Mis locales</button>
-            }
-            @if (account.businessProfile) {
-                <!-- aca se muestra los datos si es una cuenta business -->
-            }@else {
-                <!-- aca se muestra los datos si es una cuenta user -->
-            }
-        }
-        @case ('edit') {
-            @if (accountState().data!.businessProfile) {
-                <!-- aca se muestra el forms si es una cuenta business -->
-            }@else {
-                <!-- aca se muestra el forms si es una cuenta user -->
-            }
-            <button (click)="onConfirm()">Confirmar</button>
-            <button (click)="onCancel()">Cancelar</button>
-        }
-        @case ('password') {
-            <!-- aca se muestra el forms para cambiar la contraseña -->
-            <button (click)="onConfirm()">Confirmar</button>
-            <button (click)="onCancel()">Cancelar</button>
-        }
-        @case ('cbu') {
-            <!-- aca se muestra el forms para cambiar el cbu -->
-            <button (click)="onConfirm()">Confirmar</button>
-            <button (click)="onCancel()">Cancelar</button>
-        }
-        @case ('address') {
-            <app-address
-                (onClose)="onChangeTemplate('profile')"
+          </div>
+
+        </div>
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: editar perfil
+           -------------------------------------------------------- -->
+      @case ('edit') {
+        <form [formGroup]="updateForm" (ngSubmit)="onConfirm()" class="account-form">
+
+          <div class="account-form__header">
+            <h2 class="account-form__title">Editar perfil</h2>
+            <p class="account-form__subtitle">
+              Dejá en blanco los campos que no querés modificar.
+            </p>
+          </div>
+
+          @if (accountState().data!.businessProfile) {
+            <!-- Formulario: cuenta empresarial -->
+            <div formGroupName="businessAccount">
+              <div class="form-group">
+                <label for="edit-title">Nombre del negocio</label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  formControlName="title"
+                  placeholder="Nombre del negocio"
+                  autocomplete="organization"
+                />
+                @if (updateForm.get('title')?.invalid && updateForm.get('title')?.touched) {
+                  <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+                }
+              </div>
+            </div>
+
+            <div formGroupName="businessAccount">
+              <div class="form-group">
+                <label for="edit-bio">Descripción <span class="account-form__optional">(opcional)</span></label>
+                <textarea
+                  id="edit-bio"
+                  formControlName="bio"
+                  rows="3"
+                  placeholder="Contá brevemente a qué se dedica tu negocio..."
+                ></textarea>
+                @if (updateForm.get('bio')?.invalid && updateForm.get('bio')?.touched) {
+                  <p class="field-error">Mínimo 10 caracteres.</p>
+                }
+              </div>
+            </div>
+
+            <div formGroupName="businessAccount">
+              <div class="form-group">
+                <label for="edit-phone">Teléfono</label>
+                <input
+                  id="edit-phone"
+                  type="tel"
+                  formControlName="phone"
+                  placeholder="+54 9 11 1234-5678"
+                  autocomplete="tel"
+                />
+                @if (updateForm.get('phone')?.invalid && updateForm.get('phone')?.touched) {
+                  <p class="field-error">Máximo 50 caracteres.</p>
+                }
+              </div>
+            </div>
+
+          } @else {
+            <!-- Formulario: cuenta personal -->
+            <div class="form-row">
+              <div formGroupName="userAccount">
+                <div class="form-group">
+                  <label for="edit-firstname">Nombre</label>
+                  <input
+                    id="edit-firstname"
+                    type="text"
+                    formControlName="firstname"
+                    placeholder="Juan"
+                    autocomplete="given-name"
+                  />
+                  @if (updateForm.get('firstname')?.invalid && updateForm.get('firstname')?.touched) {
+                    <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+                  }
+                </div>
+              </div>
+
+              <div formGroupName="userAccount">
+                <div class="form-group">
+                  <label for="edit-lastname">Apellido</label>
+                  <input
+                    id="edit-lastname"
+                    type="text"
+                    formControlName="lastname"
+                    placeholder="Pérez"
+                    autocomplete="family-name"
+                  />
+                  @if (updateForm.get('lastname')?.invalid && updateForm.get('lastname')?.touched) {
+                    <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div formGroupName="userAccount">
+                <div class="form-group">
+                  <label for="edit-birth">Fecha de nacimiento <span class="account-form__optional">(opcional)</span></label>
+                  <input
+                    id="edit-birth"
+                    type="date"
+                    formControlName="birth"
+                    autocomplete="bday"
+                  />
+                </div>
+              </div>
+
+              <div formGroupName="userAccount">
+                <div class="form-group">
+                  <label for="edit-phone">Teléfono <span class="account-form__optional">(opcional)</span></label>
+                  <input
+                    id="edit-phone"
+                    type="tel"
+                    formControlName="phone"
+                    placeholder="+54 9 11 1234-5678"
+                    autocomplete="tel"
+                  />
+                  @if (updateForm.get('phone')?.invalid && updateForm.get('phone')?.touched) {
+                    <p class="field-error">Máximo 50 caracteres.</p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Campos comunes: email y username -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-email">Correo electrónico</label>
+              <input
+                id="edit-email"
+                type="email"
+                formControlName="email"
+                placeholder="correo@ejemplo.com"
+                autocomplete="email"
+              />
+              @if (updateForm.get('email')?.invalid && updateForm.get('email')?.touched) {
+                <p class="field-error">Ingresá un email válido.</p>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="edit-username">Nombre de usuario</label>
+              <input
+                id="edit-username"
+                type="text"
+                formControlName="username"
+                placeholder="mi_usuario"
+                autocomplete="username"
+              />
+              @if (updateForm.get('username')?.invalid && updateForm.get('username')?.touched) {
+                <p class="field-error">Máximo 50 caracteres.</p>
+              }
+            </div>
+          </div>
+
+          <div class="account-form__actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="updateForm.invalid || accountState().loading"
+            >
+              @if (accountState().loading) {
+                <span class="spinner" aria-hidden="true"></span>
+              }
+              Guardar cambios
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="accountState().loading"
+              (click)="onCancel()"
+            >
+              Cancelar
+            </button>
+          </div>
+
+        </form>
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: cambiar contraseña
+           -------------------------------------------------------- -->
+      @case ('password') {
+        <form [formGroup]="passwordForm" (ngSubmit)="onConfirm()" class="account-form account-form--narrow">
+
+          <div class="account-form__header">
+            <h2 class="account-form__title">Cambiar contraseña</h2>
+            <p class="account-form__subtitle">
+              Ingresá tu contraseña actual y la nueva que querés utilizar.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="pwd-old">Contraseña actual</label>
+            <input
+              id="pwd-old"
+              type="password"
+              formControlName="oldPassword"
+              placeholder="Tu contraseña actual"
+              autocomplete="current-password"
             />
-        }
-        @case ('stores') {
-            <app-store
-                (onClose)="onChangeTemplate('profile')"
+            @if (passwordForm.get('oldPassword')?.invalid && passwordForm.get('oldPassword')?.touched) {
+              <p class="field-error">Requerido. Mínimo 4 caracteres.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="pwd-new">Nueva contraseña</label>
+            <input
+              id="pwd-new"
+              type="password"
+              formControlName="newPassword"
+              placeholder="Nueva contraseña"
+              autocomplete="new-password"
             />
-        }
+            @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+              <p class="field-error">Requerido. Mínimo 4 caracteres.</p>
+            }
+          </div>
+
+          <div class="account-form__actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="passwordForm.invalid || accountState().loading"
+            >
+              @if (accountState().loading) {
+                <span class="spinner" aria-hidden="true"></span>
+              }
+              Confirmar
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="accountState().loading"
+              (click)="onCancel()"
+            >
+              Cancelar
+            </button>
+          </div>
+
+        </form>
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: cambiar CBU
+           -------------------------------------------------------- -->
+      @case ('cbu') {
+        <form [formGroup]="cbuForm" (ngSubmit)="onConfirm()" class="account-form account-form--narrow">
+
+          <div class="account-form__header">
+            <h2 class="account-form__title">Cambiar CBU</h2>
+            <p class="account-form__subtitle">
+              Confirmá tu identidad con tu contraseña actual antes de actualizar el CBU.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="cbu-password">Contraseña actual</label>
+            <input
+              id="cbu-password"
+              type="password"
+              formControlName="password"
+              placeholder="Tu contraseña actual"
+              autocomplete="current-password"
+            />
+            @if (cbuForm.get('password')?.invalid && cbuForm.get('password')?.touched) {
+              <p class="field-error">Requerido. Mínimo 4 caracteres.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="cbu-new">Nuevo CBU</label>
+            <input
+              id="cbu-new"
+              type="text"
+              formControlName="newCBU"
+              placeholder="22 dígitos"
+              autocomplete="off"
+              maxlength="22"
+              inputmode="numeric"
+            />
+            @if (cbuForm.get('newCBU')?.invalid && cbuForm.get('newCBU')?.touched) {
+              <p class="field-error">El CBU debe tener exactamente 22 dígitos.</p>
+            }
+          </div>
+
+          <div class="account-form__actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="cbuForm.invalid || accountState().loading"
+            >
+              @if (accountState().loading) {
+                <span class="spinner" aria-hidden="true"></span>
+              }
+              Confirmar
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="accountState().loading"
+              (click)="onCancel()"
+            >
+              Cancelar
+            </button>
+          </div>
+
+        </form>
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: direcciones (componente hijo)
+           -------------------------------------------------------- -->
+      @case ('address') {
+        <app-address (onClose)="onChangeTemplate('profile')" />
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: locales (componente hijo)
+           -------------------------------------------------------- -->
+      @case ('stores') {
+        <app-store (onClose)="onChangeTemplate('profile')" />
+      }
+
     }
-}
+  }
+
+</div>

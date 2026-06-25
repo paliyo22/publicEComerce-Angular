@@ -83,6 +83,7 @@ export class App {
     if(result.success){
       this.authService.logIn(result.output);
       this.showLogin.set(false);
+      this.logForm.reset();
     };
   };
 

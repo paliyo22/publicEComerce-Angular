@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { PublicProfileService } from './public-profile-service';
 import { RouterLink } from "@angular/router";
 import { CartService } from '../../cart/cart-service';
@@ -15,11 +15,11 @@ export class AccountPublicProfile {
   private readonly cartService = inject(CartService);
   protected profileState = this.profileSchema.state;
   protected processing = signal(new Set<string>());
-  protected username = input.required<string>();
+  protected account = input.required<string>();
 
   constructor() {
     effect(() => {
-      this.profileSchema.getPublicAccountInfo(this.username());
+      untracked(() => this.profileSchema.getPublicAccountInfo(this.account()));
     });
   };
 
@@ -47,6 +47,6 @@ export class AccountPublicProfile {
   };
 
   onRetry(){
-    this.profileSchema.getPublicAccountInfo(this.username());
+    this.profileSchema.getPublicAccountInfo(this.account());
   }
 }

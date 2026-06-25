@@ -1,0 +1,234 @@
+/* ============================================================
+   Account component
+   ============================================================ */
+:host {
+  display: block;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+/* ============================================================
+   Estado: cargando / error
+   ============================================================ */
+.account__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding-block: 5rem;
+  text-align: center;
+}
+
+.account__state-msg {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* ============================================================
+   Vista: perfil
+   ============================================================ */
+.account__profile {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------- Header card (avatar + datos) ---------- */
+.account__header-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.account__avatar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+  border: 2px solid var(--color-border);
+  color: var(--color-primary);
+}
+
+.account__header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.account__display-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.account__username {
+  font-size: 0.9375rem;
+}
+
+.account__bio {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-block-start: 0.125rem;
+}
+
+.account__email {
+  font-size: 0.875rem;
+}
+
+.account__role-badge {
+  margin-block-start: 0.375rem;
+  align-self: flex-start;
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.account__role-badge.badge--primary {
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-color: var(--color-primary);
+}
+
+/* ---------- Data list (información de la cuenta) ---------- */
+.account__details .section-title {
+  margin-block-end: 1rem;
+}
+
+.account__data-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.account__data-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-block: 0.625rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9375rem;
+}
+
+.account__data-item:last-child {
+  border-bottom: none;
+}
+
+.account__data-item dt {
+  font-weight: 500;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.account__data-item dd {
+  color: var(--color-text);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ---------- Acciones ---------- */
+.account__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+}
+
+.account__action-btn {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .account__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .account__header-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .account__header-info {
+    align-items: center;
+  }
+
+  .account__role-badge {
+    align-self: center;
+  }
+
+  .account__data-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .account__data-item dd {
+    text-align: left;
+  }
+}
+
+/* ============================================================
+   Formularios (edit / password / cbu)
+   ============================================================ */
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Versión estrecha para password y cbu */
+.account-form--narrow {
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+.account-form__header {
+  margin-block-end: 0.25rem;
+}
+
+.account-form__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.account-form__subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-block-start: 0.25rem;
+  line-height: 1.5;
+}
+
+.account-form__optional {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* form-group y form-row son clases globales heredadas de styles.css */
+
+.account-form__actions {
+  display: flex;
+  gap: 0.625rem;
+  padding-block-start: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .account-form__actions {
+    flex-direction: column;
+  }
+
+  .account-form__actions .btn {
+    width: 100%;
+  }
+}

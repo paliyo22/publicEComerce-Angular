@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnInit, signal, untracked } from '@angular/core';
 import { ProductUpdate } from '../update/update';
 import { ProductReviews } from '../reviews/reviews';
 import { ProductService } from '../services/product/product-service';
@@ -34,7 +34,7 @@ export class ProductDetails implements OnInit{
       const currentId = this.id().trim();
       if(currentId){
         this.editing.set(false);
-        this.productService.getProduct(currentId);
+        untracked(() => this.productService.getProduct(currentId));
       }else{
         this.router.navigate(['/error']);
       };

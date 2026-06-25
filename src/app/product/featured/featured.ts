@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { FeaturedService } from './featured-service';
 import { RouterLink } from "@angular/router";
 import { CartService } from '../../cart/cart-service';
+import { AuthService } from '../../account/services/auth/auth-service';
 
 @Component({
   selector: 'app-featured',
@@ -13,6 +14,7 @@ import { CartService } from '../../cart/cart-service';
 export class Featured implements OnInit{
   private readonly featuredService = inject(FeaturedService);
   private readonly cartService = inject(CartService);
+  protected readonly authState = inject(AuthService).state;
   protected featuredState = this.featuredService.state;
   private limit = 5;
 

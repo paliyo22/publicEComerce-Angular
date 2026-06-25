@@ -27,22 +27,28 @@ export class AccountCreate {
   private initForms(){
     if(this.show() === 'business'){
       this.accountForm = this.fb.group({
-        title: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
-        bio: ['', Validators.minLength(10)],
-        phone: ['', [Validators.required, Validators.maxLength(50)]],
         email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
         username: ['', [Validators.required, Validators.maxLength(50)]],
-        cbu: ['', [Validators.required, Validators.minLength(22), Validators.maxLength(22)]]
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        businessAccount: this.fb.group({
+          title: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
+          bio: ['', Validators.minLength(10)],
+          phone: ['', [Validators.required, Validators.maxLength(50)]],
+          cbu: ['', [Validators.minLength(22), Validators.maxLength(22)]],
+        })
       });
     }else{
       this.accountForm = this.fb.group({
-        firstname: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
-        lastname: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
-        birth: [''],
-        phone: ['', [Validators.maxLength(50)]],
         email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
         username: ['', [Validators.required, Validators.maxLength(50)]],
-        cbu: ['', [Validators.required, Validators.minLength(22), Validators.maxLength(22)]]
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        userAccount: this.fb.group({
+          firstname: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
+          lastname: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50)]],
+          birth: [''],
+          phone: ['', [Validators.maxLength(50)]],
+          cbu: ['', [Validators.minLength(22), Validators.maxLength(22)]]
+        })
       });
     };
   };
@@ -90,6 +96,7 @@ export class AccountCreate {
         }));
       }
     }else{
+      console.log(result.issues);
       // mensaje de error en lo ingresado.
     };
   }

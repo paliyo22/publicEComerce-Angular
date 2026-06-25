@@ -9,7 +9,6 @@ const dateSchema = pipe(
 );
 
 const authSchema = object({
-    email: string(),
     username: string(),
     role: enum_(ERole),
     status: string()
@@ -65,16 +64,17 @@ const businessProfileSchema = object({
     title: string(),
     bio: optional(string()),
     phone: string(),
-    cbu: string()
+    cbu: optional(string())
 });
 
 const accountSchema = object({
     ...authSchema.entries,
+    email: string(),
     meta: metaSchema,
     userProfile: optional(userProfileSchema),
     businessProfile: optional(businessProfileSchema),
-    address: optional(array(addressSchema)),
-    store: optional(array(storeSchema))
+    address: array(addressSchema),
+    store: array(storeSchema)
 });
 export type AccountSchema = InferOutput<typeof accountSchema>;
 export const validateAccountSchema = (input: unknown) => {
@@ -87,13 +87,13 @@ const publicAccountSchema = object({
     contactPhone: string(),
     bio: optional(string()),
     meta: metaSchema,
-    store: optional(array(object({
+    store: array(object({
         address: string(),
         city: string(),
         country: string(),
         phone: string(),
-    }))), 
-    products: optional(array(partialProductSchema))
+    })), 
+    products: array(partialProductSchema)
 });
 export type PublicAccountSchema = InferOutput<typeof publicAccountSchema>;
 export const validatePublicAccountSchema = (input: unknown) => {

@@ -43,7 +43,7 @@ export class AuthService {
       error: null
     }));
 
-    this.http.post<AuthSchema>(`${this.apiUrl}/auth/login`, data)
+    this.http.post<AuthSchema>(`${this.apiUrl}/auth/login`, data, {withCredentials: true})
     .pipe(
       timeout(6700),
       tap((result) => {

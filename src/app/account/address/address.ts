@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, output, signal } from '@angular/core';
 import { AddressService } from './address-service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { validateNewAddressSchema } from '../../../schemas/create-account-schema';
 
 @Component({
   selector: 'app-address',
-  imports: [],
+  imports: [ReactiveFormsModule],
   templateUrl: './address.html',
   styleUrl: './address.css',
   changeDetection: ChangeDetectionStrategy.OnPush

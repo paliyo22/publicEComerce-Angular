@@ -4,6 +4,7 @@ import { ECategory } from '../../../enum/category';
 import { Router, RouterLink } from '@angular/router';
 import { Featured } from "../featured/featured";
 import { CartService } from '../../cart/cart-service';
+import { AuthService } from '../../account/services/auth/auth-service';
 
 @Component({
   selector: 'app-category',
@@ -16,18 +17,20 @@ export class Category {
   private readonly router = inject(Router);
   private readonly categoryService = inject(CategoryService);
   private readonly cartService = inject(CartService);
+  protected readonly authState = inject(AuthService).state;
   protected readonly categoryState = this.categoryService.state;
-  private readonly limit = 20;
+  private readonly limit = 4;
 
   protected p = input<number>();
   protected category = input.required<string>();
   
   protected processing = signal(new Set<string>());
   protected maxPages = computed(() => Math.ceil(this.categoryState().total / this.limit));
+  protected currentPage = computed(() => this.p() ? Number(this.p()) : 1);
 
   constructor(){
     effect(() => {
-      const page = this.p() ?? 1;
+      const page = this.currentPage();
       const category = this.category();
       if(page < 1){
         this.router.navigate(['/error']);
@@ -60,7 +63,7 @@ export class Category {
           this.loadPage(result, offset);
         };
       }else {
-        this.categoryService.getCategoryTotalProducts(result, this.limit);
+        this.categoryService.getCategoryTotalProducts(result, this.limit, offset);
       };      
     }else{
       this.router.navigate(['/error']);
@@ -72,7 +75,7 @@ export class Category {
   };
 
   getVisiblePages(): (number | string)[] {
-    const current = this.p() ?? 1;
+    const current = this.currentPage();
     const total = this.maxPages();
     const pages: (number | string)[] = [];
     
@@ -112,7 +115,7 @@ export class Category {
   };
 
   onRetry(){
-    const page = this.p() ?? 1;
+    const page = this.currentPage();
     this.categoryService.reset();
     this.getCategoryList(this.category(), page);
   };

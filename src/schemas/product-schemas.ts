@@ -17,9 +17,9 @@ export const partialProductSchema = object({
     price: number(),
     discountPercentage: number(),
     stock: number(),
-    brand: string(),
-    tags: optional(array(string())),
-    images: optional(array(string())), 
+    brand: optional(string()),
+    tags: array(string()),
+    images: array(string()), 
     thumbnail: optional(string()),
     ratingAvg: number(),
     status: enum_(EProductStatus)
@@ -54,13 +54,13 @@ const productSchema = object({
     contactPhone: string(),
     contactEmail: string(),
     accountBio: optional(string()),
-    store: optional(array(object({
+    store: array(object({
         address: string(),
         city: string(),
         country: string(),
         phone: string(),
-    }))),
-    reviews: optional(array(reviewSchema)),
+    })),
+    reviews: array(reviewSchema),
     warrantyInfo: optional(string()),
     shippingInfo: optional(string()),
 });

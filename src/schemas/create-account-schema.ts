@@ -2,55 +2,63 @@ import { check, InferOutput, instance, object, optional, partial, pipe, safePars
 
 const dateSchema = pipe(
     union([string(), instance(Date)]),
-    transform((value) => (value instanceof Date ? value : new Date(value))),
-    check((date) => !isNaN(date.getTime()), 'Invalid date')
+    transform((value) => {
+        if (value === '' || value === null || value === undefined) return undefined;
+        return value instanceof Date ? value : new Date(value)
+    }),
+    check((date) => date === undefined || !isNaN((date as Date).getTime()), 'Invalid date')
 );
 
-const newAccountSchema = object({
-    email: string(),
-    username: string()
-});
-
-const businessSchema = object({
-    ...newAccountSchema.entries,
+const businessAccountSchema = object({
     title: string(),
-    bio: optional(string()),
+    bio: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
     phone: string(),
     cbu: optional(string())
 });
 const newBusinessSchema = object({
-    ...businessSchema.entries,
-    password: string()
-})
+    email: string(),
+    username: string(),
+    password: string(),
+    businessAccount: businessAccountSchema
+});
 export type NewBusinessSchema = InferOutput<typeof newBusinessSchema>;
 export const validateNewBusiness = (input: unknown) => {
     return safeParse(newBusinessSchema, input);
 };
 
-const userSchema = object({
-    ...newAccountSchema.entries,
+const userAccountSchema = object({
     firstname: string(),
     lastname: string(),
     birth: optional(dateSchema),
-    phone: optional(string()),
-    cbu: optional(string())
+    phone: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
+    cbu: optional(pipe(string(), transform((v) => v.length ? v : undefined)))
 });
 const newUserSchema = object({
-    ...userSchema.entries,
-    password: string()
-})
+    email: string(),
+    username: string(),
+    password: string(),
+    userAccount: userAccountSchema
+});
 export type NewUserSchema = InferOutput<typeof newUserSchema>;
 export const validateNewUser = (input: unknown) => {
     return safeParse(newUserSchema, input);
 };
 
-const partialBusiness = partial(businessSchema);
+const partialBusiness = object({
+    email: optional(string()),
+    username: optional(string()),
+    businessAccount: optional(partial(businessAccountSchema))
+});
 export type UpdateBusinessSchema = InferOutput<typeof partialBusiness>;
 export const validateUpdateBusinessSchema = (input: unknown) => {
     return safeParse(partialBusiness, input);
 };
 
-const partialUser = partial(userSchema);
+const partialUser = object({
+    email: optional(string()),
+    username: optional(string()),
+    userAccount: optional(partial(userAccountSchema))
+});
 export type UpdateUserSchema = InferOutput<typeof partialUser>;
 export const validateUpdateUserSchema = (input: unknown) => {
     return safeParse(partialUser, input);
@@ -69,8 +77,8 @@ export const validateNewAddressSchema = (input: unknown) => {
 };
 
 const newStoreSchema = object({
-    address: newAddressSchema,
-    phone: string(),
+    ...newAddressSchema.entries,
+    phone: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
 });
 export type NewStoreSchema = InferOutput<typeof newStoreSchema>;
 export const validateNewStoreSchema = (input: unknown) => {

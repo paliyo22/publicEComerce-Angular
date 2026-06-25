@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { validateUpdateBusinessSchema, validateUpdateUserSchema } from '../../schemas/create-account-schema';
 import { AccountService } from './services/account/account-service';
 import { Address } from "./address/address";
 import { Store } from './store/store';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-account',
-  imports: [Address, Store],
+  imports: [Address, Store, 
+    ReactiveFormsModule, CommonModule],
   templateUrl: './account.html',
   styleUrl: './account.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -44,20 +46,24 @@ export class Account implements OnInit{
     const state = this.accountState().data!;
     if(state.businessProfile){
       this.updateForm = this.fb.group({
-        title: [state.businessProfile.title, [Validators.minLength(4), Validators.maxLength(50)]],
-        bio: [state.businessProfile.bio, Validators.minLength(10)],
-        phone: [state.businessProfile.phone, [Validators.maxLength(50)]],
         email: [state.email, [Validators.email, Validators.maxLength(100)]],
-        username: [state.username, [Validators.maxLength(50)]]
+        username: [state.username, [Validators.maxLength(50)]],
+        businessAccount: this.fb.group({
+          title: [state.businessProfile.title, [Validators.minLength(4), Validators.maxLength(50)]],
+          bio: [state.businessProfile.bio ?? '', Validators.minLength(10)],
+          phone: [state.businessProfile.phone, [Validators.maxLength(50)]],
+        })
       });
     }else{
       this.updateForm = this.fb.group({
-        firstname: [state.userProfile!.firstname, [Validators.minLength(4), Validators.maxLength(50)]],
-        lastname: [state.userProfile!.lastname, [Validators.minLength(4), Validators.maxLength(50)]],
-        birth: [state.userProfile!.birth],
-        phone: [state.userProfile!.phone, [Validators.maxLength(50)]],
         email: [state.email, [Validators.email, Validators.maxLength(100)]],
-        username: [state.username, [Validators.maxLength(50)]]
+        username: [state.username, [Validators.maxLength(50)]],
+        userAccount: this.fb.group({
+          firstname: [state.userProfile!.firstname, [Validators.minLength(4), Validators.maxLength(50)]],
+          lastname: [state.userProfile!.lastname, [Validators.minLength(4), Validators.maxLength(50)]],
+          birth: [state.userProfile!.birth ?? ''],
+          phone: [state.userProfile!.phone ?? '', [Validators.maxLength(50)]]
+        }) 
       });
     };
     this.resetSensitiveForms();

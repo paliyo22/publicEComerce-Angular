@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, output, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StoreService } from './store-service';
 import { validateNewStoreSchema } from '../../../schemas/create-account-schema';
 
 @Component({
   selector: 'app-store',
-  imports: [],
+  imports: [ReactiveFormsModule],
   templateUrl: './store.html',
   styleUrl: './store.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,14 +34,12 @@ export class Store implements OnInit {
 
   initForms() {
     this.storeForm = this.fb.group({
-      address: this.fb.group({
-        address: ['', [Validators.required, Validators.maxLength(100)]],
-        apartment: ['', Validators.maxLength(10)],
-        city: ['', [Validators.required, Validators.maxLength(100)]],
-        zip: ['', [Validators.required, Validators.maxLength(10)]],
-        country: ['', [Validators.required, Validators.maxLength(100)]]
-      }),
-      phone: ['', [Validators.required, Validators.maxLength(50)]]
+      address: ['', [Validators.required, Validators.maxLength(100)]],
+      apartment: ['', Validators.maxLength(10)],
+      city: ['', [Validators.required, Validators.maxLength(100)]],
+      zip: ['', [Validators.required, Validators.maxLength(10)]],
+      country: ['', [Validators.required, Validators.maxLength(100)]],
+      phone: ['', [Validators.maxLength(50)]]
     });
   }
 

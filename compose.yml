@@ -1,0 +1,24 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - frontend-net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./localhost.pem:/etc/ssl/localhost.pem:ro
+      - ./localhost-key.pem:/etc/ssl/localhost-key.pem:ro
+    depends_on:
+      - frontend
+    networks:
+      - frontend-net
+
+networks:
+  frontend-net:
+    driver: bridge

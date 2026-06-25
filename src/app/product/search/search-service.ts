@@ -42,7 +42,7 @@ export class SearchService {
     };
 
     if(this.searchSignal().search === normalized) return;
-    const params = new HttpParams().set('contains', normalized);
+    const params = new HttpParams().set('contain', normalized);
 
     if(this.searchSignal().loading) return;
     this.searchSignal.update(() => ({

@@ -77,31 +77,35 @@
         <form [formGroup]="accountForm" (ngSubmit)="onConfirm()" class="create-form">
           <h2 class="create-form__title">Cuenta empresarial</h2>
 
-          <div class="form-group">
-            <label for="ca-title">Nombre del negocio *</label>
-            <input
-              id="ca-title"
-              type="text"
-              formControlName="title"
-              placeholder="Ej: Tienda Electrónica Sur"
-              autocomplete="organization"
-            />
-            @if (accountForm.get('title')?.invalid && accountForm.get('title')?.touched) {
-              <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
-            }
+          <div formGroupName="businessAccount">
+            <div class="form-group">
+              <label for="ca-title">Nombre del negocio *</label>
+              <input
+                id="ca-title"
+                type="text"
+                formControlName="title"
+                placeholder="Ej: Tienda Electrónica Sur"
+                autocomplete="organization"
+              />
+              @if (accountForm.get('title')?.invalid && accountForm.get('title')?.touched) {
+                <p class="field-error">Mínimo 4 caracteres, máximo 50.</p>
+              }
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="ca-bio">Descripción <span class="create-form__optional">(opcional)</span></label>
-            <textarea
-              id="ca-bio"
-              formControlName="bio"
-              rows="3"
-              placeholder="Contá brevemente a qué se dedica tu negocio..."
-            ></textarea>
-            @if (accountForm.get('bio')?.invalid && accountForm.get('bio')?.touched) {
-              <p class="field-error">Mínimo 10 caracteres.</p>
-            }
+          <div formGroupName="businessAccount">
+            <div class="form-group">
+              <label for="ca-bio">Descripción <span class="create-form__optional">(opcional)</span></label>
+              <textarea
+                id="ca-bio"
+                formControlName="bio"
+                rows="3"
+                placeholder="Contá brevemente a qué se dedica tu negocio..."
+              ></textarea>
+              @if (accountForm.get('bio')?.invalid && accountForm.get('bio')?.touched) {
+                <p class="field-error">Mínimo 10 caracteres.</p>
+              }
+            </div>
           </div>
 
           <div class="form-row">
@@ -134,7 +138,7 @@
             </div>
           </div>
 
-          <div class="form-row">
+          <div formGroupName="businessAccount">
             <div class="form-group">
               <label for="ca-b-phone">Teléfono *</label>
               <input
@@ -165,6 +169,20 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="ca-password">Contraseña *</label>
+            <input
+              id="ca-password"
+              type="password"
+              formControlName="password"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
+            />
+            @if (accountForm.get('password')?.invalid && accountForm.get('password')?.touched) {
+              <p class="field-error">Mínimo 6 caracteres.</p>
+            }
+          </div>
+
           <div class="create-form__actions">
             <button
               type="submit"
@@ -184,7 +202,7 @@
         <form [formGroup]="accountForm" (ngSubmit)="onConfirm()" class="create-form">
           <h2 class="create-form__title">Cuenta personal</h2>
 
-          <div class="form-row">
+          <div formGroupName="userAccount">
             <div class="form-group">
               <label for="ca-firstname">Nombre *</label>
               <input
@@ -244,7 +262,7 @@
             </div>
           </div>
 
-          <div class="form-row">
+          <div formGroupName="userAccount">
             <div class="form-group">
               <label for="ca-birth">Fecha de nacimiento <span class="create-form__optional">(opcional)</span></label>
               <input
@@ -270,18 +288,34 @@
             </div>
           </div>
 
+          <div formGroupName="userAccount">
+            <div class="form-group">
+              <label for="ca-cbu">CBU <span class="create-form__optional">(opcional)</span></label>
+              <input
+                id="ca-cbu"
+                type="text"
+                formControlName="cbu"
+                placeholder="22 dígitos"
+                autocomplete="off"
+                maxlength="22"
+              />
+              @if (accountForm.get('cbu')?.invalid && accountForm.get('cbu')?.touched) {
+                <p class="field-error">El CBU debe tener exactamente 22 dígitos.</p>
+              }
+            </div>
+          </div>
+
           <div class="form-group">
-            <label for="ca-cbu">CBU <span class="create-form__optional">(opcional)</span></label>
+            <label for="ca-password">Contraseña *</label>
             <input
-              id="ca-cbu"
-              type="text"
-              formControlName="cbu"
-              placeholder="22 dígitos"
-              autocomplete="off"
-              maxlength="22"
+              id="ca-password"
+              type="password"
+              formControlName="password"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
             />
-            @if (accountForm.get('cbu')?.invalid && accountForm.get('cbu')?.touched) {
-              <p class="field-error">El CBU debe tener exactamente 22 dígitos.</p>
+            @if (accountForm.get('password')?.invalid && accountForm.get('password')?.touched) {
+              <p class="field-error">Mínimo 6 caracteres.</p>
             }
           </div>
 

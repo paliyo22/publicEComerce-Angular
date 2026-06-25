@@ -323,7 +323,7 @@ export class ProductService {
       timeout(6700),
       tap(() => {
         this.productSignal.update((state) => {
-          const result = state.data?.reviews?.filter((r) => r.username !== username);
+          const result = state.data!.reviews.filter((r) => r.username !== username);
           return {
             ...state,
             data: {...state.data!, reviews: result},

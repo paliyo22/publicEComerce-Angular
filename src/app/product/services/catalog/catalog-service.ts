@@ -29,7 +29,7 @@ export class CatalogService {
     });
   }
 
-  getTotalProducts(limit?: number){
+  getTotalProducts(limit: number, offset = 0){
     if(this.catalogSignal().loading) return;
     this.reset();
     this.catalogSignal.update((state) => ({
@@ -46,7 +46,7 @@ export class CatalogService {
             ...state,
             total: response
           }));
-          this.getProductList(limit, 0);
+          this.getProductList(limit, offset);
       }),
       catchError((err) => {
         let errorMessage: string;

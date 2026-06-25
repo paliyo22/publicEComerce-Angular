@@ -53,6 +53,7 @@ export class AccountService {
     ).pipe(
       timeout(6700),
       map((response) => {
+        console.log(response);
         const result = validateAccountSchema(response);
         if(!result.success){
           console.error(`[AccountService]: Validation of response failed on "getAccountInfo".`, result.issues);
@@ -129,7 +130,7 @@ export class AccountService {
       loading: true,
       error: null
     }));
-
+    console.log(account);
     withAuthRetry<AccountSchema | void>(() => 
       this.http.put<AccountSchema | void>(`${this.apiUrl}/account`, account, {withCredentials: true}),
       this.authService

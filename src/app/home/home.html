@@ -21,24 +21,22 @@
   } @else {
     <app-featured />
 
-    @let currentPage = p() ?? 1;
     @if (catalogState().data.size < 1) {
       <div class="catalog__state">
         <p class="catalog__state-msg">Todavía no hay productos para mostrar.</p>
       </div>
-    } @else if (maxPages() < currentPage) {
+    } @else if (maxPages() < currentPage()) {
       <div class="catalog__state">
         <p class="catalog__state-msg">La página a la que intentas acceder no existe.</p>
         <button type="button" class="btn btn-outline" [routerLink]="['/']">Volver al inicio</button>
       </div>
     } @else {
-      @let products = catalogState().data.get(currentPage);
+      @let products = catalogState().data.get(currentPage());
       @if (!products) {
         <div class="catalog__center">
           <span class="spinner spinner--brand" role="status" aria-label="Cargando productos"></span>
         </div>
       } @else {
-        <h1 class="catalog__title">Catálogo</h1>
         <ul class="product-grid">
           @for (prod of products; track prod.id) {
             <li class="product-card">
@@ -70,23 +68,25 @@
 
                 <div class="product-card__footer">
                   <span class="product-card__price">{{ '$' + prod.price }}</span>
-                  <button
-                    type="button"
-                    class="product-card__cart"
-                    [disabled]="processing().has(prod.id) || prod.stock < 1"
-                    (click)="onAddToCart(prod.id, prod.title)"
-                    [attr.aria-label]="'Agregar ' + prod.title + ' al carrito'"
-                  >
-                    @if (processing().has(prod.id)) {
-                      <span class="spinner" aria-hidden="true"></span>
-                    } @else {
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                      </svg>
-                    }
-                  </button>
+                  @if (authState().data) {
+                    <button
+                      type="button"
+                      class="product-card__cart"
+                      [disabled]="processing().has(prod.id) || prod.stock < 1"
+                      (click)="onAddToCart(prod.id, prod.title)"
+                      [attr.aria-label]="'Agregar ' + prod.title + ' al carrito'"
+                    >
+                      @if (processing().has(prod.id)) {
+                        <span class="spinner" aria-hidden="true"></span>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <circle cx="9" cy="21" r="1" />
+                          <circle cx="20" cy="21" r="1" />
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
+                      }
+                    </button>
+                  }
                 </div>
               </div>
             </li>
@@ -98,9 +98,9 @@
             <button
               type="button"
               class="pagination-btn"
-              [disabled]="currentPage === 1"
+              [disabled]="currentPage() === 1"
               [routerLink]="['/']"
-              [queryParams]="{ page: currentPage - 1 }"
+              [queryParams]="{ p: currentPage() - 1 }"
               queryParamsHandling="merge"
             >
               <span>Anterior</span>
@@ -112,9 +112,9 @@
                   type="button"
                   class="page-number"
                   [routerLink]="['/']"
-                  [queryParams]="{ page: page }"
+                  [queryParams]="{ p: page }"
                   queryParamsHandling="merge"
-                  [class.active]="page === currentPage"
+                  [class.active]="page === currentPage()"
                   [style.pointer-events]="page === '...' ? 'none' : 'auto'"
                 >
                   {{ page }}
@@ -125,9 +125,9 @@
             <button
               type="button"
               class="pagination-btn"
-              [disabled]="currentPage === maxPages()"
+              [disabled]="currentPage() === maxPages()"
               [routerLink]="['/']"
-              [queryParams]="{ page: currentPage + 1 }"
+              [queryParams]="{ p: currentPage() + 1 }"
               queryParamsHandling="merge"
             >
               <span>Siguiente</span>

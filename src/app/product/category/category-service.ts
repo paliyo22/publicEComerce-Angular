@@ -32,7 +32,7 @@ export class CategoryService {
     });
   }
 
-  getCategoryTotalProducts(category: ECategory, limit?: number): void {
+  getCategoryTotalProducts(category: ECategory, limit: number, offset = 0): void {
     if(this.categorySignal().loading) return;
     const params = new HttpParams().set('category', category);
     this.categorySignal.update(() => ({

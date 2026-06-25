@@ -64,7 +64,10 @@
             },
             "development": {
               "buildTarget": "PublicEcommerce:build:development"
-            }
+            }            
+          },
+          "options": {
+            "allowedHosts": ["frontend"]
           },
           "defaultConfiguration": "development"
         },
