@@ -8,7 +8,7 @@ const dateSchema = pipe(
 );
 
 const withdrawalSchema = object({
-    amount: number(),
+    amount: pipe(union([string(), number()]), transform((value) => typeof value === 'number' ? value : Number(value))),
     status: enum_(EStateStatus),
     cbu: string(),
     created: dateSchema
@@ -19,7 +19,7 @@ export const validateWithdrawalSchema = (input: unknown) => {
 };
 
 const incomeSchema = object({
-    amount: number(),
+    amount: pipe(union([string(), number()]), transform((value) => typeof value === 'number' ? value : Number(value))),
     orderId: string(),
     created: dateSchema
 });

@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { firstValueFrom, timeout, tap, catchError, of, map, TimeoutError } from 'rxjs';
+import { firstValueFrom, timeout, tap, catchError, of, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { withAuthRetry } from '../../../helpers/withRetry';
 import { WithdrawalSchema, IncomeSchema, validateWithdrawalSchema, validateIncomeSchema } from '../../../schemas/balance-schema';
@@ -80,8 +80,6 @@ export class BalanceService {
 
     try {
       while (!this.abortPolling) {
-        let success = false;
-
         try {
           const response = await firstValueFrom(
             withAuthRetry<number>(
@@ -91,11 +89,11 @@ export class BalanceService {
           );
 
           this.balanceSignal.update(() => ({
-            data: { balance: response, date: new Date() },
+            data: { balance: Number(response), date: new Date() },
             loading: false,
             error: null
           }));
-          success = true;
+          this.abortPolling = true;
 
         } catch (err) {
           if (err instanceof HttpErrorResponse && err.error?.message === 'NOT_FOUND') {
@@ -103,9 +101,9 @@ export class BalanceService {
           }
         }
 
-        if (success) break; 
+        if (this.abortPolling) break; 
 
-        await new Promise((r) => setTimeout(r, 10000));
+        await new Promise((r) => setTimeout(r, 7000));
       }
     } catch (err: any) {
       this.balanceSignal.update((state) => ({
@@ -118,23 +116,31 @@ export class BalanceService {
 
   async makeWithdrawal(amount: number): Promise<void | {data: string; error: boolean}>{
     try{
-      const result = await firstValueFrom(
+      const response = await firstValueFrom(
         withAuthRetry<void | WithdrawalSchema>(() => 
           this.http.post<void | WithdrawalSchema>(`${this.apiUrl}/balance`, {amount}, {withCredentials: true}),
           this.authService
         )
       );
-      if(result){
-        this.withdrawalSignal.update((state) => ({
-          ...state,
-          data: [...state.data, result]
-        }));
-      };
+      if(response){
+        const result = validateWithdrawalSchema(response);
+        if(!result.success){
+          throw new Error('PARSE_ERROR');
+        }else{
+          this.withdrawalSignal.update((state) => ({
+            ...state,
+            data: [...state.data, result.output]
+          }));
+        };
+      }
     }catch(err: any){
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        console.error('[BalanceService]: Conection or network error on "makeWithdrawal":', err);
-        errorMessage = 'NETWORK_ERROR';
+        if(err instanceof Error){ 
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR';
+        }
       }else{
         if(err.error.status === 504){
           return {
@@ -143,7 +149,6 @@ export class BalanceService {
           };
         };
         errorMessage = err.error.message || 'ERROR';
-        console.error(`[BalanceService]: "makeWithdrawal": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return {
         data: errorMessage,
@@ -171,21 +176,13 @@ export class BalanceService {
     ).pipe(
       timeout(6700),
       map((response) => {
-        const failures = new Array<any>();
-        const withdrawals = new Array<WithdrawalSchema>();
-        response.forEach((r) => {
-          const result = validateWithdrawalSchema(r);
-          if(!result.success){
-            failures.push(result.issues);
-          }else{
-            withdrawals.push(result.output);
-          };
+        return response.map((w) => {
+          const aux = validateWithdrawalSchema(w);
+          if(!aux.success) {
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
         });
-        if(failures.length){
-          console.error(`[BalanceService]: Validation of response failed on "getWithdrawalList".`, failures);
-          throw new Error('ERROR');
-        }
-        return withdrawals;
       }),
       tap((result) => {
         this.withdrawalSignal.update(() => ({
@@ -200,14 +197,10 @@ export class BalanceService {
           if(err instanceof Error){ 
             errorMessage = err.message;
           }else{
-            if(!(err instanceof TimeoutError)){
-              console.error('[BalanceService]: Conection or network error on "getWithdrawalList":', err);
-            };
             errorMessage = 'NETWORK_ERROR' 
           };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[BalanceService]: "getWithdrawalList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.withdrawalSignal.update((state) => ({
@@ -239,21 +232,13 @@ export class BalanceService {
     ).pipe(
       timeout(6700),
       map((response) => {
-        const failures = new Array<any>();
-        const incomes = new Array<IncomeSchema>();
-        response.forEach((r) => {
-          const result = validateIncomeSchema(r);
-          if(!result.success){
-            failures.push(result.issues);
-          }else{
-            incomes.push(result.output);
-          };
-        });
-        if(failures.length){
-          console.error(`[BalanceService]: Validation of response failed on "getIncomeList".`, failures);
-          throw new Error('ERROR');
-        }
-        return incomes;
+        return response.map((i) => {
+          const aux = validateIncomeSchema(i);
+          if(!aux.success) {
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        }); 
       }),
       tap((result) => {
         this.incomeSignal.update(() => ({
@@ -268,14 +253,10 @@ export class BalanceService {
           if(err instanceof Error){ 
             errorMessage = err.message;
           }else{
-            if(!(err instanceof TimeoutError)){
-              console.error('[BalanceService]: Conection or network error on "getIncomeList":', err);
-            };
             errorMessage = 'NETWORK_ERROR'; 
           };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[BalanceService]: "getIncomeList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.incomeSignal.update((state) => ({

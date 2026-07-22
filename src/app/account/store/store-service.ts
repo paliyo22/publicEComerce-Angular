@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { StoreSchema } from '../../../schemas/account-schemas';
+import { StoreSchema, validateStoreSchema } from '../../../schemas/account-schemas';
 import { NewStoreSchema } from '../../../schemas/create-account-schema';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { timeout, tap, catchError, TimeoutError, of, firstValueFrom } from 'rxjs';
+import { timeout, tap, catchError, TimeoutError, of, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { withAuthRetry } from '../../../helpers/withRetry';
 import { AuthService } from '../services/auth/auth-service';
@@ -52,6 +52,15 @@ export class StoreService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((s) => {
+          const aux = validateStoreSchema(s);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        });
+      }),
       tap((result) => {
         this.storeSignal.update(() => ({
           data: result,
@@ -62,13 +71,13 @@ export class StoreService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[StoreService]: Conection or network error on "getStoreList":', err);
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
           }
-          errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[StoreService]: "getStoreList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.storeSignal.update((state) => ({
@@ -97,8 +106,14 @@ export class StoreService {
         ).pipe(timeout(6700))
       );
 
-      this.storeSignal.update((state) => ({ // esta funcion se llama con los datos ya cargados.
-        data: [...state.data!, result],
+      const aux = validateStoreSchema(result);
+      
+      if(!aux.success){
+        throw new Error('PARSE_ERROR');
+      }
+
+      this.storeSignal.update((state) => ({
+        data: [...state.data!, aux.output],
         loading: false,
         error: null
       }));
@@ -106,13 +121,13 @@ export class StoreService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[StoreService]: Conection or network error on "addStore":', err);
-        }
-        errorMessage = 'NETWORK_ERROR'; 
+        if(err instanceof Error){
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR';
+        };
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[StoreService]: "addStore": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       this.storeSignal.update((state) => ({
         ...state,
@@ -132,7 +147,7 @@ export class StoreService {
         ).pipe(timeout(6700))
       );
       
-      this.storeSignal.update((state) => {// esta funcion se llama con los datos ya cargados.
+      this.storeSignal.update((state) => {
         return{
           data: state.data!.filter((a) => a.id !== storeId),
           loading: false,
@@ -143,13 +158,9 @@ export class StoreService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[StoreService]: Conection or network error on "deleteStore":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[StoreService]: "deleteStore": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };

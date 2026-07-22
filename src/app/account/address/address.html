@@ -25,6 +25,9 @@
             Estamos realizando tareas de mantenimiento. Aguardá unos minutos y volvé a intentarlo.
           </p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @case ('NOT_FOUND') {
           <p class="alert alert--error">
             No se pudo eliminar la dirección. Volvé a intentarlo.

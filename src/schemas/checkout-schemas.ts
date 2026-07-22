@@ -1,5 +1,5 @@
 import { forward, InferInput, intersect, number, object, optional, partialCheck, pipe, 
-    safeParse, string, union } from "valibot";
+    safeParse, string, transform, union } from "valibot";
 
 const checkoutCartSchema = pipe(
   object({
@@ -31,7 +31,7 @@ const orderSourceSchema = union([
     
 const addressSchema = object({
     address: string(),
-    apartment: optional(string()),
+    apartment: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
     city: string(),
     zip: string(),
     country: string()
@@ -50,6 +50,9 @@ const unavailableProductSchema = object({
     reason: string()
 });
 export type UnavailableProductSchema = InferInput<typeof unavailableProductSchema>;
+export const validateUnavailableProductSchema = (input: unknown) => {
+    return safeParse(unavailableProductSchema, input);
+};
 
 const draftOrderSchema = object({
     id: string(),

@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../../environments/environment.development';
-import { ProductSchema, ReviewSchema, validateProduct } from '../../../../schemas/product-schemas';
-import { catchError, firstValueFrom, map, of, tap, timeout, TimeoutError } from 'rxjs';
+import { ProductSchema, ReviewSchema, validateProductSchema, validateReviewSchema } from '../../../../schemas/product-schemas';
+import { catchError, firstValueFrom, map, of, tap, timeout } from 'rxjs';
 import { NewProductSchema, UpdateProductSchema } from '../../../../schemas/create-product-schema';
 import { withAuthRetry } from '../../../../helpers/withRetry';
 import { AuthService } from '../../../account/services/auth/auth-service';
@@ -57,18 +57,17 @@ export class ProductService {
     .pipe(
       timeout(6700),
       map((data) => {
-        const result = validateProduct(data);
+        const result = validateProductSchema(data);
         if(!result.success){
-          console.warn(`[ProductService] Error procesing product:`, result);
           throw new Error('PARSE_ERROR');
-        }else{
-          return result.output;
-        };            
+        };
+        return result.output;            
       }),
       tap((response) => {
         this.productSignal.update((state) => ({
           ...state,
           data: response,
+          id: id,
           loading: false
         }));     
       }),
@@ -78,14 +77,10 @@ export class ProductService {
           if(err instanceof Error){
             errorMessage = err.message;
           }else{
-            if(!(err instanceof TimeoutError)){
-              console.error('[ProductService]: Conection or network error on "updateProduct":', err);
-            }
             errorMessage = 'NETWORK_ERROR'; 
           }; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[ProductService]: "getProduct": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.productSignal.update((state) => ({
@@ -107,44 +102,48 @@ export class ProductService {
 
     try {
       const result = await firstValueFrom( 
-        withAuthRetry<ProductSchema | string>(() =>  
-          this.http.post<ProductSchema | string>(`${this.apiUrl}/product`, product, { withCredentials: true }),
+        withAuthRetry<ProductSchema | {product: string}>(() =>  
+          this.http.post<ProductSchema | {product: string}>(`${this.apiUrl}/product`, product, { withCredentials: true }),
           this.authService
         ).pipe(timeout(6700))
       );
 
-      if(typeof result === 'string'){
+      if('product' in result){
         this.productSignal.update((state) => ({
           ...state,
           loading: false,
           error: null
         }));
         return {
-          data: result,
+          data: result.product,
           error: false
         }; 
       }else{
+        const aux = validateProductSchema(result);
+        if(!aux.success){
+          throw new Error('PARSE_ERROR');
+        };
         this.productSignal.update(() => ({
-          data: result,
-          id: result.id,
+          data: aux.output,
+          id: aux.output.id,
           loading: false,
           error: null
         }));
         return {
-          data: result.id,
+          data: aux.output.id,
           error: false
         }; 
       };
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[ProductService]: Conection or network error on "addNewProduct":', err);
-        }
-        errorMessage = 'NETWORK_ERROR'; 
+        if(err instanceof Error){
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR'; 
+        };
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[ProductService]: "addNewProduct": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
 
       this.productSignal.update((state) => ({
@@ -172,10 +171,9 @@ export class ProductService {
           this.authService
         ).pipe(timeout(6700))
       );
-      // esta verificacion solo se hace para corroborar que estoy parseando bien los datos que entran del back.
-      const result = validateProduct(response);
+
+      const result = validateProductSchema(response);
       if(!result.success){
-        console.warn(`[ProductService] Error procesing product:`, result);
         throw new Error('PARSE_ERROR');
       };
 
@@ -193,14 +191,10 @@ export class ProductService {
         if(err instanceof Error){
           errorMessage = err.message;
         }else{
-          if(!(err instanceof TimeoutError)){
-            console.error('[ProductService]: Conection or network error on "updateProduct":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         };
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[ProductService]: "updateProduct": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
 
       this.productSignal.update((state) => ({
@@ -236,13 +230,9 @@ export class ProductService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[ProductService]: Conection or network error on "deleteProduct":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[ProductService]: "deleteProduct": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
 
       if(productId === this.productSignal().id){
@@ -256,7 +246,7 @@ export class ProductService {
     };
   };
 
-  addReview(rating: number, comment?: string) {
+  addReview(data: any) {
     if(this.productSignal().loading){
       return;
     };
@@ -266,13 +256,24 @@ export class ProductService {
       error: null
     }));
 
-    const productId = this.productSignal().id;
-
+    const review = { productId: this.productSignal().id, rating: data.rating, comment: data.comment };
+    
     withAuthRetry<ReviewSchema | void>(() =>  
-      this.http.post<ReviewSchema | void>(`${this.apiUrl}/review`, { productId, rating, comment }, { withCredentials: true }),
+      this.http.post<ReviewSchema | void>(`${this.apiUrl}/review`, review, { withCredentials: true }),
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        if(data){
+          const aux = validateReviewSchema(data);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          };
+          return aux.output;
+        }else{
+          return;
+        }
+      }),
       tap((result) => {
         if(result){
           this.productSignal.update((state) => ({
@@ -285,13 +286,13 @@ export class ProductService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[ProductService]: Conection or network error on "addReview":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          }; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[ProductService]: "addReview": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.productSignal.update((state) => ({
@@ -334,13 +335,9 @@ export class ProductService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[ProductService]: Conection or network error on "deleteReview":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[ProductService]: "deleteReview": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.productSignal.update((state) => ({

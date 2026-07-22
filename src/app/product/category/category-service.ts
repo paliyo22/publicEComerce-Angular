@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { timeout, tap, catchError, of, TimeoutError } from 'rxjs';
+import { timeout, tap, catchError, of, map } from 'rxjs';
 import { ECategory } from '../../../enum/category';
 import { environment } from '../../../environments/environment.development';
-import { PartialProductSchema } from '../../../schemas/product-schemas';
+import { PartialProductSchema, validatePartialProductSchema } from '../../../schemas/product-schemas';
 
 @Injectable({
   providedIn: 'root',
@@ -51,18 +51,14 @@ export class CategoryService {
           ...state,
           total: response,
         }));
-        this.getCategoryProductList(category, limit, 0);
+        this.getCategoryProductList(category, limit, offset);
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CategoryService]: Conection or network error on "getCategoryTotalProducts":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CategoryService]: "getCategoryTotalProducts": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.categorySignal.update((state) => ({
@@ -87,6 +83,15 @@ export class CategoryService {
     this.http.get<PartialProductSchema[]>(`${this.apiUrl}/product/category/${category}`, { params })
     .pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((p) => {
+          const aux = validatePartialProductSchema(p);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          };
+          return aux.output;
+        });
+      }),
       tap((response) => {
         this.categorySignal.update((state) => {
           const newItemsMap = new Map(state.data);
@@ -107,13 +112,13 @@ export class CategoryService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CategoryService]: Conection or network error on "getCategoryProductList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CategoryService]: "getCategoryProductList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.categorySignal.update((state) => ({

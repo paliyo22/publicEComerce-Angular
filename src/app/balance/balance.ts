@@ -1,17 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, untracked } from '@angular/core';
 import { BalanceService } from './services/balance-service';
 import { BalanceVariationsService } from './services/balance-variations-service';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AlertService } from '../alert-component/alert-service';
 
 @Component({
   selector: 'app-balance',
-  imports: [],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './balance.html',
   styleUrl: './balance.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Balance implements OnInit{
   private readonly balanceService = inject(BalanceService);
+  private readonly alertService = inject(AlertService);
   private readonly balanceVariationsService = inject(BalanceVariationsService);
+  private readonly fb = inject(FormBuilder);
+
   protected readonly incomeVariationsState = this.balanceVariationsService.incomeState;
   protected readonly expensesVariationsState = this.balanceVariationsService.expensesState;
   protected readonly withdrawalState = this.balanceService.withdrawalState;
@@ -21,6 +27,13 @@ export class Balance implements OnInit{
   protected processing = signal(false);
 
   protected show = signal<'movements' | 'withdrawalList' | 'incomeList' | 'withdrawal'>('movements');
+
+  protected sinceControl = new FormControl<string | null>(null);
+  protected untilControl = new FormControl<string | null>(null);
+
+  protected withdrawalForm = this.fb.group({
+    amount: [null as number | null, [Validators.required, Validators.min(1)]],
+  });
 
   protected records = computed(() => {
     const withdrawals = this.withdrawalState().data.map((item) => ({
@@ -36,82 +49,102 @@ export class Balance implements OnInit{
     );
   });
 
-  constructor(){
+  constructor() {
     effect(() => {
       const template = this.show();
-      if(template === 'withdrawal'){
-        this.balanceService.getBalance(true);
+      if (template === 'withdrawal') {
+        this.withdrawalForm.reset();
+        untracked(() => this.balanceService.getBalance(true));
       }
-    })
+    });
+
+    effect(() => {
+      const state = this.balanceState();
+      if (!state.loading && !state.error && state.data) {
+        const amountControl = this.withdrawalForm.get('amount');
+        amountControl?.setValidators([
+          Validators.required,
+          Validators.min(1),
+          Validators.max(state.data.balance),
+        ]);
+        amountControl?.updateValueAndValidity();
+      }
+    });
   }
 
   ngOnInit(): void {
     this.balanceService.getWithdrawalList();
     this.balanceService.getIncomeList();
-  };
+  }
 
-  onChange(template: 'movements' | 'withdrawalList' | 'incomeList' | 'withdrawal'){
+  onChange(template: 'movements' | 'withdrawalList' | 'incomeList' | 'withdrawal') {
     this.show.set(template);
-  };
+  }
 
-  async onWithdrawal(input: number){
-    if(this.balanceState().data.balance < input) return;
-    if(this.processing()) return;
+  async onWithdrawal() {
+    if (this.withdrawalForm.invalid || this.processing()) return;
+    const amount = Number(this.withdrawalForm.get('amount')!.value!);
+
+    if(this.balanceState().data.balance < amount) return;
     this.processing.set(true);
-    const result = await this.balanceService.makeWithdrawal(input);
-    if(result){
-      if(!result.error){
+
+    const result = await this.balanceService.makeWithdrawal(amount);
+
+    if (result) {
+      if (!result.error) {
         this.checkResult(result.data);
         return;
-      }else{
+      } else {
         this.errorManager(result.data);
       }
-    };
+    }
     this.balanceService.getWithdrawalList(true);
     this.onChange('withdrawalList');
     this.processing.set(false);
-  };
+  }
 
-  async checkResult(token: string){
+  async checkResult(token: string) {
     const result = await this.balanceService.getResult(token);
-    if(result) this.errorManager(result);
+    if (result) this.errorManager(result);
     this.balanceService.getWithdrawalList(true);
     this.onChange('withdrawalList');
     this.processing.set(false);
-  };
+  }
 
-  onRetry(){
-    if(this.show() === 'movements'){
+  onRetry() {
+    if (this.show() === 'movements') {
       this.balanceService.getWithdrawalList(true);
       this.balanceService.getIncomeList(true);
-    }else if(this.show() === 'incomeList'){
+    } else if (this.show() === 'incomeList') {
       this.balanceService.getIncomeList(true);
-    }else if(this.show() === 'withdrawalList'){
+    } else if (this.show() === 'withdrawalList') {
       this.balanceService.getWithdrawalList(true);
-    }else{
+    } else {
       this.balanceService.getBalance(true);
     }
-  };
+  }
 
-  onGetVariations(since?: Date, until?: Date){
-    if(!since && until) return;
+  onGetVariations() {
+    const sinceValue = this.sinceControl.value;
+    const untilValue = this.untilControl.value;
 
-    if(since && !until) until = new Date();
+    const since = sinceValue ? new Date(sinceValue) : undefined;
+    const until = untilValue ? new Date(untilValue) : undefined;
 
-    if(this.show() === 'incomeList'){
+    if (this.show() === 'incomeList') {
       this.balanceVariationsService.getIncomes(since, until);
-    }else{
+    } else {
       this.balanceVariationsService.getExpenses(since, until);
-    };
-  };
+    }
+  }
 
-  onCleanVariationError(){
-    if(this.show() === 'incomeList'){
+  onCleanVariationError() {
+    if (this.show() === 'incomeList') {
       this.balanceVariationsService.cleanIncomesError();
-    }else{
+    } else {
       this.balanceVariationsService.cleanExpensesError();
-    };
-  };
+    }
+  }
 
   errorManager(error: string){
     let message: string;
@@ -134,6 +167,9 @@ export class Balance implements OnInit{
       case 'FAILED':
         message = 'Error obteniendo el resultado, verifique si su retiro se ha realizado.';
         break;
+      case 'PARSE_ERROR':
+        message = 'Error al procesar la informacion, contactá a soporte técnico.';
+        break;
       case 'NETWORK_ERROR':
         message = 'Error de coneccion. Checke su conneccion a internet y reintente.';
         break;
@@ -141,6 +177,6 @@ export class Balance implements OnInit{
         message = "Error interno, intente nuevamente. Si el error persiste contacte con soporte tecnico."
         break;
     };
-    // alerta de error con el contenido de "message"
+    this.alertService.setAlert(message, 'error');
   }
 }

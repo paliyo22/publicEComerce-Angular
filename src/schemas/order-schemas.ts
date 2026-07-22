@@ -1,4 +1,4 @@
-import { array, check, InferOutput, instance, number, object, pipe, string, transform, union } from "valibot";
+import { array, check, InferOutput, instance, number, object, pipe, safeParse, string, transform, union } from "valibot";
 
 const salesSchema = object({
     productId: string(),
@@ -10,6 +10,9 @@ const salesSchema = object({
     subtotal: number()
 }); 
 export type SalesSchema = InferOutput<typeof salesSchema>;
+export const validateSalesSchema = (input: unknown) => {
+    return safeParse(salesSchema, input);
+};
 
 const dateSchema = pipe(
     union([string(), instance(Date)]),
@@ -24,6 +27,9 @@ const partialOrderSchema = object({
     created: dateSchema
 });
 export type PartialOrderSchema = InferOutput<typeof partialOrderSchema>;
+export const validatePartialOrderSchema = (input: unknown) => {
+    return safeParse(partialOrderSchema, input);
+};
 
 const orderItemsSchema = object({
     productId: string(),
@@ -40,10 +46,16 @@ const orderSchema = object({
     items: array(orderItemsSchema)
 });
 export type OrderSchema = InferOutput<typeof orderSchema>;
+export const validateOrderSchema = (input: unknown) => {
+    return safeParse(orderSchema, input);
+};
 
-const balaneVariationSchema = object({
+const balanceVariationSchema = object({
     since: dateSchema, 
     until: dateSchema,
     total: number()
 });
-export type BalanceVariationSchema = InferOutput<typeof balaneVariationSchema>;
+export type BalanceVariationSchema = InferOutput<typeof balanceVariationSchema>;
+export const validateBalanceVariationSchema = (input: unknown) => {
+    return safeParse(balanceVariationSchema, input);
+};

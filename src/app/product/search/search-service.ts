@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, of, tap, timeout, TimeoutError } from 'rxjs';
+import { catchError, map, of, tap, timeout, TimeoutError } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
-import { PartialProductSchema } from '../../../schemas/product-schemas';
+import { PartialProductSchema, validatePartialProductSchema } from '../../../schemas/product-schemas';
 
 @Injectable({
   providedIn: 'root',
@@ -55,6 +55,17 @@ export class SearchService {
     this.http.get<{ products: PartialProductSchema[], accounts: string[] }>(`${this.apiUrl}/search`, { params })
     .pipe(
       timeout(6700),
+      map((data) => {
+        const products = data.products.map((p) => {
+          const aux = validatePartialProductSchema(p);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        });
+
+        return { products, accounts: data.accounts };
+      }),
       tap((response) => {
         if(!response.accounts.length && !response.products.length){
           this.searchSignal.update((state) => ({
@@ -75,13 +86,13 @@ export class SearchService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[SearchService]: Conection or network error on "search":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[SearchService]: "search": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.searchSignal.update((state) => ({

@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { timeout, tap, catchError, of, TimeoutError, firstValueFrom } from 'rxjs';
+import { timeout, tap, catchError, of, TimeoutError, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { withAuthRetry } from '../../../helpers/withRetry';
-import { AddressSchema } from '../../../schemas/account-schemas';
+import { AddressSchema, validateAddressSchema } from '../../../schemas/account-schemas';
 import { AuthService } from '../services/auth/auth-service';
 import { NewAddressSchema } from '../../../schemas/create-account-schema';
 
@@ -52,6 +52,15 @@ export class AddressService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((a) => {
+          const aux = validateAddressSchema(a);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        });
+      }),
       tap((result) => {
         this.addressSignal.update(() => ({
           data: result,
@@ -62,13 +71,13 @@ export class AddressService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AddressService]: Conection or network error on "getAddressList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          } 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AddressService]: "getAddressList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.addressSignal.update((state) => ({
@@ -97,6 +106,11 @@ export class AddressService {
         ).pipe(timeout(6700))
       );
 
+      const aux = validateAddressSchema(result);      
+      if(!aux.success){
+        throw new Error('PARSE_ERROR');
+      }
+
       this.addressSignal.update((state) => ({
         data: [...state.data!, result],
         loading: false,
@@ -105,14 +119,14 @@ export class AddressService {
       return true;
     }catch (err: any){
       let errorMessage: string;
-        if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AddressService]: Conection or network error on "addAddress":', err);
-        }
-        errorMessage = 'NETWORK_ERROR'; 
+      if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
+        if(err instanceof Error){
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR';
+        };
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AddressService]: "addAddress": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       this.addressSignal.update((state) => ({
         ...state,
@@ -140,13 +154,9 @@ export class AddressService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AddressService]: Conection or network error on "deleteAddress":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AddressService]: "deleteAddress": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };

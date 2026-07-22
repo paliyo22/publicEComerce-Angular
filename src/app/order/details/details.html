@@ -1,32 +1,203 @@
 @if (state().loading) {
-    <!-- spiner -->
-}@else if (state().error) {
+
+  <!-- ============================================================
+       Estado: cargando
+       ============================================================ -->
+  <div class="details__state">
+    <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando orden"></span>
+  </div>
+
+} @else if (state().error) {
+
+  <!-- ============================================================
+       Estado: error
+       ============================================================ -->
+  <div class="details__state">
     @switch (state().error) {
-        @case ('RESULT_NOT_FOUND') {
-            <!-- Error interno, nose pudo determinar el resultado de la transaccion. Verifique sus registros de compra, en caso de que no exista contacte a soporte. -->
-        }
-        @case ('RESULT_TIMEOUT') {
-            <!-- No hemos podido confirmar su compra, aguarde unos minutos y verifique sus registros de compra. En caso de que el no exista, contacte a soporte. -->
-        }
-        @case ('TIMEOUT') {
-            <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
-        }
-        @case ('UNAVAILABLE') {
-            <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
-        }
-        @case ('INTERNAL_ERROR') {
-            <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
-        }
-        @default {
-            <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-        }
+      @case ('RESULT_NOT_FOUND') {
+        <p class="alert alert--error">
+          No se pudo determinar el resultado de la transacción. Verificá tus registros de compra; si no existe, contactá con soporte.
+        </p>
+      }
+      @case ('RESULT_TIMEOUT') {
+        <p class="alert alert--error">
+          No pudimos confirmar tu compra. Aguardá unos minutos y verificá tus registros. Si la orden no aparece, contactá con soporte.
+        </p>
+      }
+      @case ('TIMEOUT') {
+        <p class="alert alert--error">
+          Estamos teniendo dificultades para obtener los datos. Si el error persiste, contactá con soporte.
+        </p>
+      }
+      @case ('UNAVAILABLE') {
+        <p class="alert alert--error">
+          Estamos realizando mantenimiento actualmente. Intentá más tarde.
+        </p>
+      }
+      @case ('INTERNAL_ERROR') {
+        <p class="alert alert--error">
+          Ocurrió un error inesperado. Por favor, intentá nuevamente.
+        </p>
+      }
+      @case ('PARSE_ERROR') {
+        <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+      }
+      @default {
+        <p class="alert alert--error">
+          Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+        </p>
+      }
     }
-    <button (click)="onReload()">Recargar</button>
-}@else {
-    @let order = state().data!; 
-    <!-- datos de la orden -->
-    @for (i of order.items; track i.productId) {
-        <h2 [routerLink]="['/product', i.productId]">{{i.product}}</h2>
-        <h2 [routerLink]="['/profile', i.seller]">{{i.seller}}</h2>
-    }
+    <button type="button" class="btn btn-primary" (click)="onReload()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="23 4 23 10 17 10"/>
+        <polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      Recargar
+    </button>
+  </div>
+
+} @else {
+
+  <!-- ============================================================
+       Contenido principal
+       ============================================================ -->
+  @let order = state().data!;
+
+  <div class="details">
+
+    <!-- Encabezado -->
+    <div class="details__header">
+      <h1 class="details__title section-title">Detalle de orden</h1>
+      <span class="details__id">
+        Orden <span class="details__id-value">{{ order.id }}</span>
+      </span>
+    </div>
+
+    <div class="details__layout">
+
+      <!-- --------------------------------------------------------
+           Columna principal: items
+           -------------------------------------------------------- -->
+      <div class="details__main">
+
+        <!-- Listado de productos -->
+        <section aria-label="Productos de la orden">
+          <h2 class="details__section-title section-title">Productos</h2>
+
+          <ul class="details__items">
+            @for (item of order.items; track item.productId) {
+              <li class="details__item card">
+                <div class="card__body">
+
+                  <div class="details__item-header">
+                    <a
+                      class="details__item-title"
+                      [routerLink]="['/product', item.productId]"
+                    >{{ item.product }}</a>
+                    <span class="details__item-subtotal">${{ item.subtotal }}</span>
+                  </div>
+
+                  <div class="details__item-meta">
+                    <span class="details__item-meta-row">
+                      <span class="details__item-label">Vendedor</span>
+                      <span>{{ item.seller }}</span>
+                    </span>
+
+                    <span class="details__item-meta-row">
+                      <span class="details__item-label">Cantidad</span>
+                      <span>{{ item.amount }}</span>
+                    </span>
+
+                    <span class="details__item-meta-row">
+                      <span class="details__item-label">Precio unitario</span>
+                      <span>
+                        ${{ (item.price * (1 - item.discount / 100)).toFixed(2) }}
+                        @if (item.discount > 0) {
+                          <span class="details__item-original">${{ item.price }}</span>
+                          <span class="details__item-discount">-{{ item.discount }}%</span>
+                        }
+                      </span>
+                    </span>
+                  </div>
+
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+      </div>
+
+      <!-- --------------------------------------------------------
+           Columna lateral: resumen
+           -------------------------------------------------------- -->
+      <aside class="details__aside" aria-label="Resumen de la orden">
+
+        <!-- Resumen económico -->
+        <div class="card">
+          <div class="card__body">
+            <h2 class="details__section-title section-title">Resumen</h2>
+
+            <dl class="details__summary-list">
+              <div class="details__summary-row">
+                <dt>Productos</dt>
+                <dd>{{ order.items.length }}</dd>
+              </div>
+              <div class="details__summary-row">
+                <dt>Unidades</dt>
+                <dd>{{ order.items.reduce((acc, i) => acc + i.amount, 0) }}</dd>
+              </div>
+              <hr class="divider" />
+              <div class="details__summary-row details__summary-total">
+                <dt>Total</dt>
+                <dd>${{ order.total }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Información de envío -->
+        <div class="card">
+          <div class="card__body">
+            <h2 class="details__section-title section-title">Envío</h2>
+            <div class="details__shipping">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                   stroke="currentColor" stroke-width="1.75"
+                   stroke-linecap="round" stroke-linejoin="round"
+                   class="details__shipping-icon" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <p class="details__shipping-address">{{ order.shippingAddress }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fecha de creación -->
+        <div class="card">
+          <div class="card__body details__date-card">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                 stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span class="details__date-label">Fecha</span>
+            <time
+              class="details__date-value"
+              [dateTime]="order.created"
+            >{{ order.created | date: 'dd/MM/yyyy HH:mm' }}</time>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </div>
 }

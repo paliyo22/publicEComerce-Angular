@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, OnInit, signal, untracked } from '@angular/core';
 import { RecordService } from './record-service';
 import { RouterLink } from "@angular/router";
 import { AuthService } from '../../account/services/auth/auth-service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-record',
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   templateUrl: './record.html',
   styleUrl: './record.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -22,9 +23,9 @@ export class Record {
   constructor(){
     effect(() => {
       if(this.show() === 'shoppings'){
-        this.recordService.getShoppingList();
+        untracked(() =>this.recordService.getShoppingList());
       }else{
-        this.recordService.getSalesList();
+        untracked(() => this.recordService.getSalesList());
       };
     });
   };

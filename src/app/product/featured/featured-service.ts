@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
-import { timeout, tap, catchError, of, TimeoutError } from 'rxjs';
+import { timeout, tap, catchError, of, TimeoutError, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
-import { PartialProductSchema } from '../../../schemas/product-schemas';
+import { PartialProductSchema, validatePartialProductSchema } from '../../../schemas/product-schemas';
 
 @Injectable({
   providedIn: 'root',
@@ -44,6 +44,15 @@ export class FeaturedService {
     this.http.get<PartialProductSchema[]>(`${this.apiUrl}/product/featured`, { params })
     .pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((p) => {
+          const aux = validatePartialProductSchema(p);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        })
+      }),
       tap((response) => {
         this.featuredSignal.update((state) => ({
             ...state,
@@ -54,13 +63,13 @@ export class FeaturedService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[FeaturedService]: Conection or network error on "getFeaturedList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[FeaturedService]: "getFeaturedList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.featuredSignal.update((state) => ({

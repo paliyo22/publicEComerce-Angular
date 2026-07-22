@@ -25,7 +25,7 @@ export const partialProductSchema = object({
     status: enum_(EProductStatus)
 });
 export type PartialProductSchema = InferInput<typeof partialProductSchema>;
-export const validatePartialProduct = (imput: unknown) => {
+export const validatePartialProductSchema = (imput: unknown) => {
     return safeParse(partialProductSchema, imput);
 };
 
@@ -37,7 +37,7 @@ const reviewSchema = object({
     created: dateSchema
 });
 export type ReviewSchema = InferInput<typeof reviewSchema>;
-export const validateReview = (imput: unknown) => {
+export const validateReviewSchema = (imput: unknown) => {
     return safeParse(reviewSchema, imput);
 };
 
@@ -65,6 +65,6 @@ const productSchema = object({
     shippingInfo: optional(string()),
 });
 export type ProductSchema = InferInput<typeof productSchema>;
-export const validateProduct = (imput: unknown) => {
+export const validateProductSchema = (imput: unknown) => {
     return safeParse(productSchema, imput);
 };

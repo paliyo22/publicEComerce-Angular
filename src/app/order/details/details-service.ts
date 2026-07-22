@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment.development';
-import { OrderSchema } from '../../../schemas/order-schemas';
+import { OrderSchema, validateOrderSchema } from '../../../schemas/order-schemas';
 import { withAuthRetry } from '../../../helpers/withRetry';
-import { catchError, firstValueFrom, of, tap, timeout, TimeoutError } from 'rxjs';
+import { catchError, firstValueFrom, map, of, tap, timeout } from 'rxjs';
 import { EStateStatus } from '../../../enum/state-status';
 import { AuthService } from '../../account/services/auth/auth-service';
 
@@ -41,7 +41,7 @@ export class OrderDetailsService {
 
     let params = new HttpParams();
     if(orderId){
-      params = params.set('orderId', orderId);
+      params = params.set('orderId', orderId!);
     }else{
       params = params.set('draftOrderId', draftOrderId!);
     };
@@ -57,6 +57,13 @@ export class OrderDetailsService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        const aux = validateOrderSchema(data);
+        if(!aux.success){
+          throw new Error('PARSE_ERROR');
+        } 
+        return aux.output;
+      }),
       tap((result) => {
         this.detailsSignal.update(() => ({
           data: result,
@@ -67,13 +74,13 @@ export class OrderDetailsService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[OrderDetailsService]: Conection or network error on "getOrder":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          }; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[OrderDetailsService]: "getOrder": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.detailsSignal.update((state) => ({
@@ -98,19 +105,20 @@ export class OrderDetailsService {
       let result: EStateStatus | string = EStateStatus.Pending;
       while(result === EStateStatus.Pending){
         result = await firstValueFrom(
-          withAuthRetry<EStateStatus>(() => 
-            this.http.get<EStateStatus>(`${this.apiUrl}/checkout/status/${draftOrderId}`, { withCredentials: true }),  
+          withAuthRetry<{status: EStateStatus}>(() => 
+            this.http.get<{status: EStateStatus}>(`${this.apiUrl}/checkout/status/${draftOrderId}`, { withCredentials: true }),  
             this.authService
           )
         ).then((response) => {
-          if(response === EStateStatus.Pending){
+          if(response.status === EStateStatus.Pending){
             attempts++;
           }
-          return response; 
+          return response.status; 
         }).catch((err) => {
           if(err instanceof HttpErrorResponse){
             if(err.error.message === 'NOT_FOUND'){
-              throw new Error('RESULT_NOT_FOUND'); 
+              this.getOrder(undefined, draftOrderId);
+              return EStateStatus.Completed; 
             };
           };
           if(attempts > 12){
@@ -122,7 +130,6 @@ export class OrderDetailsService {
         if(result === EStateStatus.Pending){
           await new Promise((r) => setTimeout(r, 5000));
         }
-        
       }
       this.reset();
       this.getOrder(undefined, draftOrderId);

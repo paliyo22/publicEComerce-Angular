@@ -2,20 +2,27 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { AccountProductsService } from './account-products-service';
 import { RouterLink } from '@angular/router';
 import { EProductStatus } from '../../../enum/product-status';
+import { CommonModule } from '@angular/common';
+import { ProductCreate } from "../../product/create/create";
+import { ProductUpdate } from "../../product/update/update";
+import { AlertService } from '../../alert-component/alert-service';
 
 @Component({
   selector: 'app-account-products',
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule, ProductCreate, ProductUpdate],
   templateUrl: './account-products.html',
   styleUrl: './account-products.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountProducts implements OnInit{
   private readonly accountProductService = inject(AccountProductsService);
+  private readonly alertService = inject(AlertService);
   protected productListState = this.accountProductService.state; 
 
   protected productStatus = EProductStatus;
   protected processing = signal(new Set<string>());
+  protected show = signal<'list' | 'update' | 'create'>('list');
+  protected productId = null as string | null;
   
   ngOnInit(): void {
     this.accountProductService.getMyProducts();
@@ -74,6 +81,15 @@ export class AccountProducts implements OnInit{
     this.accountProductService.getMyProducts();
   }
 
+  onTemplate(template: 'list' | 'update' | 'create', productId?: string){
+    this.productId = productId ? productId : null;
+    this.show.set(template);
+
+    if(template === 'list'){
+      this.accountProductService.getMyProducts();
+    }
+  }
+
   errorManager(action: string, error: string){
     let message: string;
     switch(error){
@@ -92,6 +108,9 @@ export class AccountProducts implements OnInit{
       case 'BAD_REQUEST':
         message = 'No se puede realizar esta accion.';
         break;
+      case 'PARSE_ERROR':
+        message = 'Error al procesar la informacion, contactá a soporte técnico.';
+        break;
       case 'BANNED':
         message = 'Este producto se encuentra baneado por incumplir con nuestros terminos y condiciones de servicio. Contacte con soporte si desea elevar un reclamo.';
         break;
@@ -105,6 +124,6 @@ export class AccountProducts implements OnInit{
         message = 'Error al ' + action;
         break;
     };
-    // alerta de error con el contenido de "message"
+    this.alertService.setAlert(message, 'error');
   }
 }

@@ -51,6 +51,9 @@ const storeSchema = object({
     phone: string(),
 });
 export type StoreSchema = InferOutput<typeof storeSchema>;
+export const validateStoreSchema = (input: unknown) => {
+    return safeParse(storeSchema, input);
+};
 
 const userProfileSchema = object({
     firstname: string(),

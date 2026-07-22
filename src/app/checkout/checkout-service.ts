@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development';
-import { DraftOrderSchema, NewDraftOrderSchema, UnavailableProductSchema } from '../../schemas/checkout-schemas';
+import { DraftOrderSchema, NewDraftOrderSchema, UnavailableProductSchema, validateDraftOrderSchema, validateUnavailableProductSchema } from '../../schemas/checkout-schemas';
 import { withAuthRetry } from '../../helpers/withRetry';
 import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { AuthService } from '../account/services/auth/auth-service';
@@ -14,24 +14,44 @@ export class CheckoutService {
   private authService = inject(AuthService);
   private apiUrl = environment.API_URL;
 
-  async createDraftOrder(data: NewDraftOrderSchema): Promise<DraftOrderSchema | UnavailableProductSchema[] | string> {
+  async createDraftOrder(data: NewDraftOrderSchema): Promise<{ success: boolean, data?: DraftOrderSchema | UnavailableProductSchema[], error?: string}> {
     try {
-      return firstValueFrom(
+      const result = await firstValueFrom(
         withAuthRetry<DraftOrderSchema | UnavailableProductSchema[]>(() => 
           this.http.post<DraftOrderSchema | UnavailableProductSchema[]>(`${this.apiUrl}/checkout`, data, {withCredentials: true}),
           this.authService  
-        ).pipe(timeout(6200))
+        ).pipe(timeout(6700))
       );
+
+      if(Array.isArray(result)){
+        const unavailableArray = result.map((u) => {
+          const aux = validateUnavailableProductSchema(u);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
+        });         
+        return { success: false, data: unavailableArray };
+      }
+
+      const response = validateDraftOrderSchema(result);
+      if(!response.success){
+        throw new Error('PARSE_ERROR');
+      }
+      return { success: true, data: response.output }
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        console.error('[CheckoutService] Conection or network error:', err);
-        errorMessage = 'NETWORK_ERROR' 
+        if(err instanceof Error){
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR'; 
+        };
       }else{
         errorMessage = err.error?.message || 'ERROR'
       };
 
-      return errorMessage;
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -46,7 +66,6 @@ export class CheckoutService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        console.error('[CheckoutService] Conection or network error:', err);
         errorMessage = 'NETWORK_ERROR' 
       }else{
         errorMessage = err.error?.message || 'ERROR'
@@ -56,25 +75,24 @@ export class CheckoutService {
     }  
   };
 
-  async createPaymentLink(draftOrderId: string): Promise<string | void> {
+  async createPaymentLink(draftOrderId: string): Promise<{success: boolean, data: string}> {
     try {
       const result = await firstValueFrom(
-        withAuthRetry<string>(() => 
-          this.http.post<string>(`${this.apiUrl}/checkout/${draftOrderId}`, {}, {withCredentials: true}),
+        withAuthRetry<{link: string}>(() => 
+          this.http.post<{link: string}>(`${this.apiUrl}/checkout/${draftOrderId}`, {}, {withCredentials: true}),
           this.authService
         )
       );
-      window.location.href = result;
+      return{success: true, data: result.link};
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        console.error('[CheckoutService] Conection or network error:', err);
         errorMessage = 'NETWORK_ERROR' 
       }else{
         errorMessage = err.error?.message || 'ERROR'
       };
 
-      return errorMessage;
+      return {success: false, data: errorMessage};
     }
   };
 
@@ -87,5 +105,28 @@ export class CheckoutService {
         return of (null);
       })
     ).subscribe();
+  };
+
+  //---------------------- TEST ---------------------------------------
+  async completeTestOrder(draftOrderId: string): Promise<{success: boolean, data: string}>{
+    try {
+      await firstValueFrom(
+        withAuthRetry<void>(() => 
+          this.http.post<void>(`${this.apiUrl}/checkout/test/purchase/${draftOrderId}`, {}, {withCredentials: true}),
+          this.authService
+        )
+      );
+
+      return {success: true, data: draftOrderId}
+    } catch (err: any) {
+      let errorMessage: string;
+      if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
+        errorMessage = 'NETWORK_ERROR' 
+      }else{
+        errorMessage = err.error?.message || 'ERROR'
+      };
+
+      return {success: false, data: errorMessage};
+    }  
   };
 }

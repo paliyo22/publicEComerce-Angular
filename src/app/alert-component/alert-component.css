@@ -1,0 +1,13 @@
+.alert {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    z-index: 1000;
+}
+.alert-info { background: #2196f3; }
+.alert-success { background: #4caf50; }
+.alert-error { background: #f44336; }
+.alert-warning { background: #ff9800; }

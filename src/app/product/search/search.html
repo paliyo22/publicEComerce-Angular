@@ -9,6 +9,9 @@
         @case ('NETWORK_ERROR') {
           <p class="search__state-msg">Parece que no tienes conexión a internet. Revisa tu red.</p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="search__state-msg">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @default {
           <p class="search__state-msg">Ocurrió un error inesperado al buscar. Intente nuevamente.</p>
         }

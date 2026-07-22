@@ -8,14 +8,14 @@ const newProductSchema = object({
     price: pipe(number(), transform((input) => Math.trunc(input * 100) / 100), minValue(0)),
     discountPercentage: optional(pipe(number(), transform((input) => Math.trunc(input * 100) / 100), minValue(0))),
     stock: pipe(number(), transform((input) => Number(input.toFixed(0))), minValue(0)),
-    brand: string(),
+    brand: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
     weight: pipe(number(), transform((input) => Math.trunc(input * 100) / 100), minValue(0)),
     physical: boolean(),
-    warrantyInfo: optional(string()),
-    shippingInfo: optional(string()),
-    tags: optional(array(string())),
-    images: optional(array(string())),
-    thumbnail: optional(string())
+    warrantyInfo: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
+    shippingInfo: optional(pipe(string(), transform((v) => v.length ? v : undefined))),
+    tags: pipe(array(string()), transform((v) => v.length ? v : [])),
+    images: pipe(array(string()), transform((v) => v.length ? v : [])),
+    thumbnail: optional(pipe(string(), transform((v) => v.length ? v : undefined)))
 });
 
 export type NewProductSchema = InferOutput<typeof newProductSchema>;

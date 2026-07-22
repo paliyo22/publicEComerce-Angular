@@ -1,0 +1,6 @@
+@if (alertState(); as alert) {
+    <div class="alert" [class]="'alert-' + alert.tipo">
+        {{alert.texto}}
+        <button (click)="close()">✕</button>
+    </div>
+}

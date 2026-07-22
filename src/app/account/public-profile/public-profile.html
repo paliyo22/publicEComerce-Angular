@@ -21,6 +21,9 @@
       @case ('BANNED') {
         <p class="profile-state__msg">Esta cuenta se encuentra suspendida.</p>
       }
+      @case ('PARSE_ERROR') {
+        <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+      }
       @default {
         <p class="profile-state__msg">Ups! Algo ha fallado. Vuelva a intentar o contacte con soporte.</p>
       }

@@ -5,6 +5,7 @@ import { AccountService } from './services/account/account-service';
 import { Address } from "./address/address";
 import { Store } from './store/store';
 import { CommonModule } from '@angular/common';
+import { AlertService } from '../alert-component/alert-service';
 
 @Component({
   selector: 'app-account',
@@ -16,6 +17,7 @@ import { CommonModule } from '@angular/common';
 })
 export class Account implements OnInit{
   protected readonly accountService = inject(AccountService);
+  private readonly alertService = inject(AlertService);
   protected readonly accountState = this.accountService.state;
   private readonly fb = inject(FormBuilder);
 
@@ -125,13 +127,12 @@ export class Account implements OnInit{
     if(result.success){
       this.accountService.updateAccount(result.output);
     }else{
-      // mostrar alerta con errores de valibot.(nunca deberia pasar);
+      this.alertService.setAlert('Error al procesar la informacion, contactá a soporte técnico.', 'error');
     }
   };
 
   onCancel() {
     this.show.set('profile');
-    //se reinicia el forms para que no quede info almacenada.
     this.initForms();
   }
 

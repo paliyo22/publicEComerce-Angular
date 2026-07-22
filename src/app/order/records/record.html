@@ -1,65 +1,308 @@
-<!-- esto solo se muestra si la cuenta no tiene rol "user" -->
-@if (authState().data!.role !== 'user') {
-    <button [disabled]="show() === 'shoppings'" (click)="onChangeTemplate()">Compras</button>
-    <button [disabled]="show() === 'sales'" (click)="onChangeTemplate()">Ventas</button>
-}
+<div class="record">
 
-@if(show() === 'shoppings'){
+  <!-- ============================================================
+       Selector de vista (solo visible para cuentas no-user)
+       ============================================================ -->
+  @if (authState().data!.role !== 'user') {
+    <div class="record__tabs" role="tablist" aria-label="Tipo de órdenes">
+      <button
+        type="button"
+        role="tab"
+        class="record__tab"
+        [class.record__tab--active]="show() === 'shoppings'"
+        [attr.aria-selected]="show() === 'shoppings'"
+        [disabled]="show() === 'shoppings'"
+        (click)="onChangeTemplate()"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        Compras
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="record__tab"
+        [class.record__tab--active]="show() === 'sales'"
+        [attr.aria-selected]="show() === 'sales'"
+        [disabled]="show() === 'sales'"
+        (click)="onChangeTemplate()"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        Ventas
+      </button>
+    </div>
+  }
+
+  <!-- ============================================================
+       Vista: Compras
+       ============================================================ -->
+  @if (show() === 'shoppings') {
+
     @if (shoppingState().loading) {
-        <!-- spiner -->
-    }@else if (shoppingState().error) {
+
+      <!-- Estado: cargando -->
+      <div class="record__state">
+        <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando compras"></span>
+      </div>
+
+    } @else if (shoppingState().error) {
+
+      <!-- Estado: error -->
+      <div class="record__state">
         @switch (shoppingState().error) {
+          @case ('TIMEOUT') {
+            <p class="alert alert--error">
+              Estamos teniendo dificultades para obtener los datos. Si el error persiste, contactá con soporte.
+            </p>
+          }
+          @case ('UNAVAILABLE') {
+            <p class="alert alert--error">
+              Estamos realizando mantenimiento actualmente. Intentá más tarde.
+            </p>
+          }
+          @case ('INTERNAL_ERROR') {
+            <p class="alert alert--error">
+              Ocurrió un error inesperado. Por favor, intentá nuevamente.
+            </p>
+          }
+          @case ('PARSE_ERROR') {
+            <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+          }
+          @default {
+            <p class="alert alert--error">
+              Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+            </p>
+          }
+        }
+        <button type="button" class="btn btn-primary" (click)="onReload()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Recargar
+        </button>
+      </div>
+
+    } @else {
+
+      <!-- Contenido: lista de compras -->
+      @let shoppingList = shoppingState().data!;
+
+      <div class="record__toolbar">
+        <h1 class="record__title section-title">Mis compras</h1>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="onReload()" title="Actualizar lista">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Actualizar
+        </button>
+      </div>
+
+      @if (shoppingList.length === 0) {
+        <div class="record__empty">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor"
+               stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"
+               class="record__empty-icon" aria-hidden="true">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <p class="record__empty-msg">Todavía no realizaste ninguna compra.</p>
+        </div>
+      } @else {
+        <ul class="record__list">
+          @for (o of shoppingList; track o.id) {
+            <li class="record__item card" [routerLink]="['/order']" [queryParams]="{ oi: o.id }">
+              <div class="card__body record__item-body">
+
+                <div class="record__item-header">
+                  <span class="record__item-id">Orden <strong>#{{ o.id }}</strong></span>
+                  <span class="record__item-total">${{ o.total }}</span>
+                </div>
+
+                <div class="record__item-meta">
+                  <span class="record__item-meta-row">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {{ o.shippingAddress }}
+                  </span>
+                  <time
+                    class="record__item-meta-row"
+                    [dateTime]="o.created"
+                  >
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    {{ o.created | date: 'dd/MM/yyyy' }}
+                  </time>
+                </div>
+
+                <span class="record__item-cta" aria-hidden="true">
+                  Ver detalle
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </span>
+
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+  } @else {
+
+    <!-- ============================================================
+         Vista: Ventas (solo para rol no-user)
+         ============================================================ -->
+    @if (authState().data!.role !== 'user') {
+
+      @if (salesState().loading) {
+
+        <!-- Estado: cargando -->
+        <div class="record__state">
+          <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando ventas"></span>
+        </div>
+
+      } @else if (salesState().error) {
+
+        <!-- Estado: error -->
+        <div class="record__state">
+          @switch (salesState().error) {
             @case ('TIMEOUT') {
-                <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
+              <p class="alert alert--error">
+                Estamos teniendo dificultades para obtener los datos. Si el error persiste, contactá con soporte.
+              </p>
             }
             @case ('UNAVAILABLE') {
-                <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
+              <p class="alert alert--error">
+                Estamos realizando mantenimiento actualmente. Intentá más tarde.
+              </p>
             }
             @case ('INTERNAL_ERROR') {
-                <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
+              <p class="alert alert--error">
+                Ocurrió un error inesperado. Por favor, intentá nuevamente.
+              </p>
             }
             @default {
-                <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
+              <p class="alert alert--error">
+                Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+              </p>
             }
-        }
-    }@else {
-        @let list = shoppingState().data!;
+          }
+          <button type="button" class="btn btn-primary" (click)="onReload()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Recargar
+          </button>
+        </div>
 
-        <button (click)="onReload()"><!-- simbolo de actualizar --></button>
-        <!-- muestro -->
-        @for (o of list; track o.id) {
-            <!-- aca muestro las ordenes de compra y si hace click en la tarjeta tiene que ejecutar: [routerLink]="['/order', {queryParams: {oi: o.id}}]" -->
-        }
-    }
-}@else {
-    @if (authState().data!.role !== 'user') {
-        @if (salesState().loading) {
-            <!-- spiner -->
-        }@else if (salesState().error) {
-            @switch (salesState().error) {
-                @case ('TIMEOUT') {
-                    <!-- Estamos teniendo dificultades para obtener los datos, si el error persiste contacte con soporte. -->
-                }
-                @case ('UNAVAILABLE') {
-                    <!-- Estamos realizando mantenimiento actualmente. Intente mas tarde. -->
-                }
-                @case ('INTERNAL_ERROR') {
-                    <!-- Ah ocurrido un error inesperado, intente nuevamente. -->
-                }
-                @default {
-                    <!-- Ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-                }
+      } @else {
+
+        <!-- Contenido: lista de ventas -->
+        @let salesList = salesState().data!;
+
+        <div class="record__toolbar">
+          <h1 class="record__title section-title">Mis ventas</h1>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="onReload()" title="Actualizar lista">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+
+        @if (salesList.length === 0) {
+          <div class="record__empty">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor"
+                 stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"
+                 class="record__empty-icon" aria-hidden="true">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <p class="record__empty-msg">Todavía no registrás ninguna venta.</p>
+          </div>
+        } @else {
+          <ul class="record__list">
+            @for (o of salesList; track $index) {
+              <li class="record__item card">
+                <div class="card__body record__item-body">
+
+                  <div class="record__item-header">
+                    <span class="record__item-product">{{ o.product }}</span>
+                    <span class="record__item-total">${{ o.subtotal }}</span>
+                  </div>
+
+                  <div class="record__item-meta">
+                    <span class="record__item-meta-row">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      {{ o.buyerEmail }}
+                    </span>
+                    <span class="record__item-meta-row">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                      </svg>
+                      {{ o.amount }} unidad{{ o.amount !== 1 ? 'es' : '' }} · ${{ o.price }} c/u
+                      @if (o.discount > 0) {
+                        <span class="record__item-discount">-{{ o.discount }}%</span>
+                      }
+                    </span>
+                  </div>
+
+                </div>
+              </li>
             }
-        }@else {
-            @let list = salesState().data!;
-            <button (click)="onReload()"><!-- simbolo de actualizar --></button>
-            <!-- muestro -->
-            @for (o of list; track $index) {
-                <!-- aca muestro las ordenes de venta -->
-            }
+          </ul>
         }
-    }@else {
-        <!-- pantalla en blanco o mensaje de que este tipo de cuenta no tiene ventas -->
-        <button (click)="onChangeTemplate()">Volver</button>
+      }
+
+    } @else {
+      <!-- Rol 'user': no tiene acceso a ventas -->
+      <div class="record__state">
+        <p class="alert alert--warning">
+          Este tipo de cuenta no tiene acceso a la sección de ventas.
+        </p>
+        <button type="button" class="btn btn-ghost" (click)="onChangeTemplate()">Volver</button>
+      </div>
     }
-}
+
+  }
+
+</div>

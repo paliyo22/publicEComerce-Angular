@@ -1,0 +1,541 @@
+/* ============================================================
+   Balance view
+   ============================================================ */
+:host {
+  display: block;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+/* ============================================================
+   Wrapper
+   ============================================================ */
+.balance {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ============================================================
+   Tabs de navegación
+   ============================================================ */
+.balance__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  align-self: flex-start;
+}
+
+.balance__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.balance__tab:hover:not(:disabled) {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.balance__tab--active,
+.balance__tab:disabled:not(.balance__tab--action) {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  cursor: default;
+}
+
+/* Tab de acción (Retirar fondos): resalta con color primario cuando está activo */
+.balance__tab--action.balance__tab--active {
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+/* ============================================================
+   Estado: cargando / error
+   ============================================================ */
+.balance__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding-block: 4rem;
+  text-align: center;
+}
+
+.balance__state-msg {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Toolbar (título + botón actualizar)
+   ============================================================ */
+.balance__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.balance__title {
+  font-size: 1.125rem;
+}
+
+/* ============================================================
+   Estado vacío
+   ============================================================ */
+.balance__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 3.5rem;
+  text-align: center;
+}
+
+.balance__empty-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-border);
+}
+
+.balance__empty-msg {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Vista: Movimientos — lista unificada
+   ============================================================ */
+.balance__movement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.balance__movement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  transition: box-shadow 0.15s ease;
+}
+
+.balance__movement-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Franja de color lateral por tipo */
+.balance__movement-item--income {
+  border-left: 4px solid var(--color-success);
+}
+
+.balance__movement-item--withdrawal {
+  border-left: 4px solid var(--color-danger);
+}
+
+/* Icono circular */
+.balance__movement-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+}
+
+.balance__movement-item--income .balance__movement-icon {
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+}
+
+.balance__movement-item--withdrawal .balance__movement-icon {
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+}
+
+/* Info del movimiento */
+.balance__movement-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.balance__movement-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.balance__movement-sub {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Lado derecho: monto + fecha/estado */
+.balance__movement-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.balance__movement-amount {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.balance__movement-amount--income {
+  color: var(--color-success);
+}
+
+.balance__movement-amount--withdrawal {
+  color: var(--color-danger);
+}
+
+.balance__movement-date {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.balance__movement-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+/* Badge de estado de retiro */
+.balance__movement-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.balance__movement-status--ok {
+  color: var(--color-success);
+  background-color: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.balance__movement-status--pending {
+  color: var(--color-warning);
+  background-color: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+.balance__movement-status--err {
+  color: var(--color-danger);
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+/* ============================================================
+   Resumen de variaciones (card)
+   ============================================================ */
+.balance__summary-card {
+  background-color: var(--color-surface);
+}
+
+.balance__summary-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.balance__summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.balance__summary-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.balance__summary-value {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.balance__summary-value--income {
+  color: var(--color-success);
+}
+
+.balance__summary-value--withdrawal {
+  color: var(--color-danger);
+}
+
+/* ============================================================
+   Filtro de fechas
+   ============================================================ */
+.balance__date-filter {
+  background-color: var(--color-surface);
+}
+
+.balance__date-filter-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.875rem;
+  align-items: flex-end;
+}
+
+.balance__date-optional {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.balance__date-filter-btn {
+  height: 2.375rem; /* alineado con inputs */
+}
+
+/* ============================================================
+   Sub-toolbar (contador + actualizar)
+   ============================================================ */
+.balance__list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.balance__list-count {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Lista de registros (ingresos / retiros individuales)
+   ============================================================ */
+.balance__record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.balance__record-item {
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.balance__record-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.balance__record-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.balance__record-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.balance__record-ref {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.balance__record-ref strong {
+  font-weight: 700;
+}
+
+.balance__record-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.balance__record-cbu {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.balance__record-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.balance__record-amount--income {
+  color: var(--color-success);
+}
+
+.balance__record-amount--withdrawal {
+  color: var(--color-danger);
+}
+
+/* Estado de retiro (reutiliza lógica de movement-status) */
+.balance__record-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  align-self: flex-start;
+}
+
+.balance__record-status--ok {
+  color: var(--color-success);
+  background-color: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.balance__record-status--pending {
+  color: var(--color-warning);
+  background-color: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+.balance__record-status--err {
+  color: var(--color-danger);
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+.balance__record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1.25rem;
+  padding-block-start: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.balance__record-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Vista: Retirar fondos
+   ============================================================ */
+.balance__withdrawal-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Card de saldo disponible */
+.balance__available {
+  background-color: var(--color-surface);
+}
+
+.balance__available-body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.balance__available-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  padding: 0.625rem;
+  border-radius: var(--radius);
+  width: 3rem;
+  height: 3rem;
+}
+
+.balance__available-label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.balance__available-amount {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+/* Formulario — hereda .account-form de styles globales */
+.balance__withdraw-form {
+  width: 100%;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 640px) {
+  .balance__tabs {
+    align-self: stretch;
+  }
+
+  .balance__tab {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .balance__summary-body {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .balance__date-filter-body {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .balance__date-filter-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .balance__movement-item {
+    gap: 0.625rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .balance__summary-body {
+    grid-template-columns: 1fr;
+  }
+}

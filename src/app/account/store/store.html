@@ -30,6 +30,9 @@
                 No se pudo eliminar el local. Volvé a intentarlo.
             </p>
             }
+            @case ('PARSE_ERROR') {
+                <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+            }
             @default {
             <p class="alert alert--error">
                 Algo ha fallado. Volvé a intentarlo y si el problema persiste, contactá con soporte.

@@ -1,4 +1,4 @@
-import { array, check, InferInput, instance, number, object, pipe, string, transform, union } from "valibot";
+import { array, check, InferInput, instance, number, object, pipe, safeParse, string, transform, union } from "valibot";
 
 const dateSchema = pipe(
     union([string(), instance(Date)]),
@@ -23,3 +23,6 @@ const cartSchema = object({
     products: array(productSchema)
 });
 export type CartSchema = InferInput<typeof cartSchema>;
+export const validateCartSchema = (input: unknown) => {
+    return safeParse(cartSchema, input);
+};

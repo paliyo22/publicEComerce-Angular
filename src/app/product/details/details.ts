@@ -7,6 +7,7 @@ import { AccountProductsService } from '../../account/account-products/account-p
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../cart/cart-service';
 import { FormsModule } from '@angular/forms';
+import { AlertService } from '../../alert-component/alert-service';
 
 @Component({
   selector: 'app-details',
@@ -21,6 +22,7 @@ export class ProductDetails implements OnInit{
   private readonly productService = inject(ProductService);
   private readonly authService = inject(AuthService);
   private readonly accountProductsService = inject(AccountProductsService);
+  private readonly alertService = inject(AlertService);
   protected productState = this.productService.state;
   protected authState = this.authService.state;
   protected id = input.required<string>();
@@ -58,9 +60,9 @@ export class ProductDetails implements OnInit{
 
     const result = await this.cartService.addToCart(productId, Math.round(amount));
     if(result){
-      // alerta de error al intentar agregar el producto al carrito
+      this.errorManager(`agregar ${title} al carrito.`, result);
     }else{
-      // alerta de producto "title" agregado
+      this.alertService.setAlert(`${title} agregado.`, 'success');
     };
   };
 
@@ -71,4 +73,35 @@ export class ProductDetails implements OnInit{
       this.productService.getProduct(this.id(), true);
     };
   };
+
+  errorManager(action: string, error: string){
+    let message: string;
+    switch(error){
+      case 'TIMEOUT':
+        message = 'Error al obtener el resultado. Actualice la pagina e intente nuevamente.';
+        break;
+      case 'UNAVAILABLE':
+        message = 'Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo.';
+        break;
+      case 'INTERNAL_ERROR':
+        message = 'Ups! Parece que algo ha fallado, vuelva a intentar. Si el error persiste contacte con soporte.';
+        break;
+      case 'NOT_FOUND':
+        message = 'Ah ocurrido un error grave, recargue la pagina y reintente. Si el error persiste contacte con soporte.';
+        break;
+      case 'BAD_REQUEST':
+        message = 'No se puede realizar esta accion.';
+        break;
+      case 'PARSE_ERROR':
+        message = 'Error al procesar la informacion, contactá a soporte técnico.';
+        break;
+      case 'NETWORK_ERROR':
+        message = 'Error de coneccion. Checke su conneccion a internet y reintente.';
+        break;
+      default:
+        message = 'Error al ' + action;
+        break;
+    };
+    this.alertService.setAlert(message, 'error');
+  }
 }

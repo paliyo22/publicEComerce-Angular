@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, untracked } from '@angular/core';
 import { OrderDetailsService } from './details-service';
 import { Router, RouterLink } from "@angular/router";
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-details',
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   templateUrl: './details.html',
   styleUrl: './details.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,18 +25,18 @@ export class OrderDetails {
       if((orderId && draftOrderId) || (!orderId && !draftOrderId)){
         this.router.navigate(['/error']);
       }else if(orderId){
-        this.detailsService.getOrder(orderId);
+        untracked(() => this.detailsService.getOrder(orderId!));
       }else{
-        this.detailsService.getOrderStatus(draftOrderId!);
+        untracked(() => this.detailsService.getOrderStatus(draftOrderId!));
       }  
     })
   };
 
   onReload(){
     if(this.oi()){
-      this.detailsService.getOrder(this.oi());
+      this.detailsService.getOrder(this.oi()!);
     }else{
-      this.detailsService.getOrderStatus(this.doi()!);
+      this.detailsService.getOrder(undefined, this.doi()!);
     };
   };
 }

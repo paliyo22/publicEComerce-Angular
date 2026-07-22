@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { timeout, tap, catchError, of, TimeoutError } from 'rxjs';
+import { timeout, tap, catchError, of, TimeoutError, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { withAuthRetry } from '../../../helpers/withRetry';
-import { PartialOrderSchema, SalesSchema } from '../../../schemas/order-schemas';
+import { PartialOrderSchema, SalesSchema, validatePartialOrderSchema, validateSalesSchema } from '../../../schemas/order-schemas';
 import { AuthService } from '../../account/services/auth/auth-service';
 
 @Injectable({
@@ -57,6 +57,15 @@ export class RecordService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((s) => {
+          const aux = validateSalesSchema(s);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          };
+          return aux.output;
+        });
+      }),
       tap((result) => {
         this.salesSignal.update(() => ({
           data: result,
@@ -67,13 +76,13 @@ export class RecordService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[RecordService]: Conection or network error on "getSalesList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[RecordService]: "getSalesList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.salesSignal.update((state) => ({
@@ -101,6 +110,15 @@ export class RecordService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((data) => {
+        return data.map((p) => {
+          const aux = validatePartialOrderSchema(p);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          };
+          return aux.output;
+        });
+      }),
       tap((result) => {
         this.shoppingSignal.update(() => ({
           data: result,
@@ -111,13 +129,13 @@ export class RecordService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[RecordService]: Conection or network error on "getShoppingList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[RecordService]: "getShoppingList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.shoppingSignal.update((state) => ({

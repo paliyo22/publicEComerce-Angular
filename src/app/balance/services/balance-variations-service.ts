@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { timeout, tap, catchError, of } from 'rxjs';
+import { timeout, tap, catchError, of, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { withAuthRetry } from '../../../helpers/withRetry';
-import { BalanceVariationSchema } from '../../../schemas/order-schemas';
+import { BalanceVariationSchema, validateBalanceVariationSchema } from '../../../schemas/order-schemas';
 import { AuthService } from '../../account/services/auth/auth-service';
 
 @Injectable({
@@ -61,7 +61,7 @@ export class BalanceVariationsService {
     if(!since && until){ 
       this.expensesSignal.update((state) => ({
         ...state,
-        error: 'until missing'
+        error: 'BAD_REQUEST'
       }));
       return;
     };
@@ -92,6 +92,13 @@ export class BalanceVariationsService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((response) => {
+        const result = validateBalanceVariationSchema(response);
+        if(!result.success){
+          throw new Error('PARSE_ERROR');
+        }
+        return result.output;     
+      }),
       tap((result) => {
         this.incomeSignal.update(() => ({
           data: result,
@@ -102,8 +109,11 @@ export class BalanceVariationsService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          console.error('[BalanceService] Conection or network error:', err);
-          errorMessage = 'NETWORK_ERROR' 
+          if(err instanceof Error){ 
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR' 
+          }
         }else{
           errorMessage = err.error?.message || 'Error on "getIncome"'
         };
@@ -123,7 +133,7 @@ export class BalanceVariationsService {
     if(!since && until){ 
       this.expensesSignal.update((state) => ({
         ...state,
-        error: 'until missing'
+        error: 'BAD_REQUEST'
       }));
       return;
     };
@@ -154,6 +164,14 @@ export class BalanceVariationsService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((response) => {
+        const result = validateBalanceVariationSchema(response);
+        if(!result.success){
+          throw new Error('PARSE_ERROR');
+        }else{
+          return result.output;
+        }
+      }),
       tap((result) => {
         this.expensesSignal.update(() => ({
           data: result,
@@ -164,8 +182,11 @@ export class BalanceVariationsService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          console.error('[BalanceService] Conection or network error:', err);
-          errorMessage = 'NETWORK_ERROR' 
+          if(err instanceof Error){ 
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR';
+          } 
         }else{
           errorMessage = err.error?.message || 'Error on "getExpenses"'
         };

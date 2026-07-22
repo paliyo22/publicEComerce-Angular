@@ -12,6 +12,9 @@
         @case ('NOT_FOUND') {
           <p class="catalog__state-msg">No se encontraron productos en esta categoría.</p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="catalog__state-msg">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @default {
           <p class="catalog__state-msg">Ocurrió un error inesperado. Intente nuevamente.</p>
         }

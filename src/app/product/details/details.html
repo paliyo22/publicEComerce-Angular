@@ -1,50 +1,52 @@
-@if (productState().loading) {
-  <div class="details__state">
-    <span class="spinner spinner--brand" role="status" aria-label="Cargando producto"></span>
-  </div>
-} @else {
-  @if (productState().error) {
+@let p = productState().data!;
+
+@if (!editing()) {
+  @if (productState().loading) {
     <div class="details__state">
-      @switch (productState().error) {
-        @case ('TIMEOUT') {
-          <p class="details__state-msg">Error al obtener el resultado. Actualice la página.</p>
-        }
-        @case ('UNAVAILABLE') {
-          <p class="details__state-msg">Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo.</p>
-        }
-        @case ('INTERNAL_ERROR') {
-          <p class="details__state-msg">Ups! Parece que algo ha fallado. Vuelva a intentar. Si el error persiste, contacte con soporte.</p>
-        }
-        @case ('NETWORK_ERROR') {
-          <p class="details__state-msg">Error de conexión. Verifique su conexión a internet y reintente.</p>
-        }
-        @case ('NOT_FOUND') {
-          <p class="details__state-msg">El producto que intenta buscar no existe.</p>
-        }
-        @case ('UNAUTHORIZED') {
-          <p class="details__state-msg">Error interno: este producto no pertenece al usuario logueado.</p>
-        }
-        @case ('BANNED') {
-          <p class="details__state-msg">Este producto ha sido suspendido y no puede ser modificado.</p>
-        }
-        @case ('DELETED') {
-          <p class="details__state-msg">No se puede modificar un producto eliminado.</p>
-        }
-        @case ('BAD_REQUEST') {
-          <p class="details__state-msg">La categoría seleccionada no existe.</p>
-        }
-        @default {
-          <p class="details__state-msg">Error interno. Vuelva a intentar. Si el error persiste, contacte con soporte.</p>
-        }
-      }
-      <button type="button" class="btn btn-outline" (click)="onRetry()">Reintentar</button>
+      <span class="spinner spinner--brand" role="status" aria-label="Cargando producto"></span>
     </div>
   } @else {
-    @let p = productState().data!;
-
-    @if (!editing()) {
+    @if (productState().error) {
+      <div class="details__state">
+        @switch (productState().error) {
+          @case ('TIMEOUT') {
+            <p class="details__state-msg">Error al obtener el resultado. Actualice la página.</p>
+          }
+          @case ('UNAVAILABLE') {
+            <p class="details__state-msg">Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo.</p>
+          }
+          @case ('INTERNAL_ERROR') {
+            <p class="details__state-msg">Ups! Parece que algo ha fallado. Vuelva a intentar. Si el error persiste, contacte con soporte.</p>
+          }
+          @case ('NETWORK_ERROR') {
+            <p class="details__state-msg">Error de conexión. Verifique su conexión a internet y reintente.</p>
+          }
+          @case ('NOT_FOUND') {
+            <p class="details__state-msg">El producto que intenta buscar no existe.</p>
+          }
+          @case ('UNAUTHORIZED') {
+            <p class="details__state-msg">Error interno: este producto no pertenece al usuario logueado.</p>
+          }
+          @case ('BANNED') {
+            <p class="details__state-msg">Este producto ha sido suspendido y no puede ser modificado.</p>
+          }
+          @case ('DELETED') {
+            <p class="details__state-msg">No se puede modificar un producto eliminado.</p>
+          }
+          @case ('BAD_REQUEST') {
+            <p class="details__state-msg">La categoría seleccionada no existe.</p>
+          }
+          @case ('PARSE_ERROR') {
+            <p class="details__state-msg">Error al procesar la informacion, contactá a soporte técnico.</p>
+          }
+          @default {
+            <p class="details__state-msg">Error interno. Vuelva a intentar. Si el error persiste, contacte con soporte.</p>
+          }
+        }
+        <button type="button" class="btn btn-outline" (click)="onRetry()">Reintentar</button>
+      </div>
+    } @else {
       <article class="details">
-
         <!-- Galería + Info principal -->
         <div class="details__layout">
 
@@ -217,8 +219,8 @@
         </section>
 
       </article>
-    } @else {
-      <app-product-update (onReturn)="onEdit()" />
     }
   }
+} @else {
+  <app-product-update (onReturn)="onEdit()"/>
 }

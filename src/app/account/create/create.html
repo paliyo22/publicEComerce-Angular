@@ -17,6 +17,9 @@
             El nombre de usuario ya está ocupado. Elegí uno diferente.
           </p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @default {
           <p class="create-account__alert create-account__alert--error">
             Algo ha salido mal. Por favor, reintentá en unos instantes.

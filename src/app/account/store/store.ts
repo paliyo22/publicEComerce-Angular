@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, output, signal } fr
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StoreService } from './store-service';
 import { validateNewStoreSchema } from '../../../schemas/create-account-schema';
+import { AlertService } from '../../alert-component/alert-service';
 
 @Component({
   selector: 'app-store',
@@ -12,6 +13,7 @@ import { validateNewStoreSchema } from '../../../schemas/create-account-schema';
 })
 export class Store implements OnInit {
   private readonly storeService = inject(StoreService);
+  private readonly alertService = inject(AlertService);
   protected readonly storeState = this.storeService.state;
   protected processing = signal(new Set<string>());
   
@@ -52,9 +54,10 @@ export class Store implements OnInit {
     this.addToSignal(storeId);
     const result = await this.storeService.deleteStore(storeId);
     if(result){
-      // mostrar alerta generica de que algo fallo, vuelva a intentar.
+      this.errorManager('eliminar la tienda.', result);
     };
     this.deleteFromSignal(storeId);
+    this.alertService.setAlert('Eliminada.', 'success');
   }
 
   async onConfirm(){
@@ -63,7 +66,7 @@ export class Store implements OnInit {
     const result = validateNewStoreSchema(this.storeForm.value);
 
     if(!result.success){
-      // alerta con error de valibot
+      this.alertService.setAlert('Error al procesar la informacion, contactá a soporte técnico.', 'error');
     }else {
       const response = await this.storeService.addStore(result.output);
       if(response){
@@ -83,4 +86,35 @@ export class Store implements OnInit {
   onBack(){
     this.onClose.emit();
   };
+
+  errorManager(action: string, error: string){
+    let message: string;
+    switch(error){
+      case 'TIMEOUT':
+        message = 'Error al obtener el resultado. Actualice la pagina e intente nuevamente.';
+        break;
+      case 'UNAVAILABLE':
+        message = 'Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo.';
+        break;
+      case 'INTERNAL_ERROR':
+        message = 'Ups! Parece que algo ha fallado, vuelva a intentar. Si el error persiste contacte con soporte.';
+        break;
+      case 'NOT_FOUND':
+        message = 'Ah ocurrido un error grave, recargue la pagina y reintente. Si el error persiste contacte con soporte.';
+        break;
+      case 'BAD_REQUEST':
+        message = 'No se puede realizar esta accion.';
+        break;
+      case 'PARSE_ERROR':
+        message = 'Error al procesar la informacion, contactá a soporte técnico.';
+        break;
+      case 'NETWORK_ERROR':
+        message = 'Error de coneccion. Checke su conneccion a internet y reintente.';
+        break;
+      default:
+        message = 'Error al ' + action;
+        break;
+    };
+    this.alertService.setAlert(message, 'error');
+  }
 }

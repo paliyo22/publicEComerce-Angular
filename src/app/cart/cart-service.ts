@@ -1,9 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { CartSchema } from '../../schemas/cart-schemas';
+import { CartSchema, validateCartSchema } from '../../schemas/cart-schemas';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment.development';
 import { withAuthRetry } from '../../helpers/withRetry';
-import { catchError, firstValueFrom, of, tap, timeout, TimeoutError } from 'rxjs';
+import { catchError, firstValueFrom, map, of, tap, timeout } from 'rxjs';
 import { AuthService } from '../account/services/auth/auth-service';
 
 @Injectable({
@@ -44,6 +44,13 @@ export class CartService {
       this.authService
     ).pipe(
       timeout(6700),
+      map((response) => {
+        const aux = validateCartSchema(response);
+        if(!aux.success){
+          throw new Error('PARSE_ERROR');
+        }
+        return aux.output;
+      }),
       tap((result) => {
         this.cartSignal.update(() => ({
           data: result,
@@ -54,13 +61,13 @@ export class CartService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CartService]: Conection or network error on "getCart":', err);
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
           };
-          errorMessage = 'NETWORK_ERROR';
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CartService]: "getCart": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.cartSignal.update((state) => ({
@@ -88,13 +95,9 @@ export class CartService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[CartService]: Conection or network error on "addToCart":', err);
-        };
         errorMessage = 'NETWORK_ERROR';
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[CartService]: "addToCart": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };
@@ -120,13 +123,9 @@ export class CartService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CartService]: Conection or network error on "deleteCart":', err);
-          };
           errorMessage = 'NETWORK_ERROR';
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CartService]: "deleteCart": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.cartSignal.update((state) => ({
@@ -155,13 +154,9 @@ export class CartService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[CartService]: Conection or network error on "deleteFromCart":', err);
-        };
         errorMessage = 'NETWORK_ERROR';
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[CartService]: "deleteFromCart": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };
@@ -183,13 +178,9 @@ export class CartService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[CartService]: Conection or network error on "changeProductAmount":', err);
-        };
         errorMessage = 'NETWORK_ERROR';
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[CartService]: "changeProductAmount": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
 
       return errorMessage;

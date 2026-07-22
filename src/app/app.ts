@@ -14,12 +14,13 @@ import { validateLog } from '../schemas/account-schemas';
 import { AccountAdministration } from "./account-administration/account-administration";
 import { Nav } from './nav/nav';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AlertComponent } from "./alert-component/alert-component";
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLinkWithHref, AccountAdministration, 
-    Nav, ReactiveFormsModule],
+  imports: [RouterOutlet, RouterLinkWithHref, AccountAdministration,
+    Nav, ReactiveFormsModule, AlertComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush

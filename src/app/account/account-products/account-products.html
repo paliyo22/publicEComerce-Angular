@@ -1,46 +1,287 @@
-@if(productListState().loading) {
-    <!-- spiner -->
-}@else if (productListState().error) {
-    @switch (productListState().error) {
-        @case ('TIMEOUT') {
-            <!-- Error al obtener el resultado. Actualice la pagina. -->
-        }
-        @case ('UNAVAILABLE') {
-            <!-- Actualmente estamos realizando mantenimiento, aguarde unos minutos y vuelva a intentarlo. -->
-        }
-        @case ('INTERNAL_ERROR') {
-            <!-- Ups! Parece que algo ha fallado, vuelva a intntar. Si el error persiste contacte con soporte. -->
-        }
-        @case ('NETWORK_ERROR') {
-            <!-- Error de coneccion. Checke su conneccion a internet y reintente. -->
-        }
-        @default {
-            <!-- Error interno, vuelva a intentar. Si el error persiste contacte con soporte. -->
-        }
-    }
-    <button (click)="onRetry()">Recargar</button>
-}@else {
-    @let products = productListState().data;
-    @if(products.length > 0){
-        @for (p of products; track p.id) {
-            <h2 [routerLink]="['/product', p.id]">{{p.title}}</h2>
-            <!-- aca mostramos los datos del producto, en base al p.status cambiamos el color de las tarjetas(si se puede) -->
-            @switch (p.status) {
-                @case (productStatus.DELETED) {
-                    <!-- aca solo mostramos boton para restaurar -->
-                    <button [disabled]="processing().has(p.id)" (click)="onRestoreProduct(p.id)">Restaurar</button>
-                }
-                @case (productStatus.BANNED) {
-                    <!-- aca no mostramos nada porque al estar baneado solo podes ver los datos -->  
-                }
-                @default {
-                    <!-- aca mostramos los inputs para los update y un boton para eliminar el producto -->
-                     <!-- boton de ejemplo -->
-                    <button [disabled]="processing().has(p.id)" (click)="onDeleteProduct(p.id)">Eliminar</button> 
+<div class="account-products">
+    @switch(show()){
+        @case('list'){
+            <!-- ============================================================
+            Estado: cargando
+            ============================================================ -->
+            @if (productListState().loading) {
+                <div class="account-products__state">
+                <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando productos"></span>
+                <p class="account-products__state-msg">Cargando tus productos...</p>
+                </div>
+
+            <!-- ============================================================
+                Estado: error
+                ============================================================ -->
+            } @else if (productListState().error) {
+                <div class="account-products__state">
+                    @switch (productListState().error) {
+                        @case ('TIMEOUT') {
+                            <p class="alert alert--error">No se pudo obtener el resultado. Por favor, actualizá la página.</p>
+                        }
+                        @case ('UNAVAILABLE') {
+                            <p class="alert alert--error">Estamos realizando tareas de mantenimiento. Aguardá unos minutos y volvé a intentarlo.</p>
+                        }
+                        @case ('INTERNAL_ERROR') {
+                            <p class="alert alert--error">Algo ha fallado. Volvé a intentarlo y si el problema persiste, contactá con soporte.</p>
+                        }
+                        @case ('NETWORK_ERROR') {
+                            <p class="alert alert--error">Error de conexión. Verificá tu conexión a internet e intentá nuevamente.</p>
+                        }
+                        @case ('PARSE_ERROR') {
+                            <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+                        }
+                        @default {
+                            <p class="alert alert--error">Error interno. Volvé a intentarlo y si el problema persiste, contactá con soporte.</p>
+                        }
+                    }
+                    <button type="button" class="btn btn-primary" (click)="onRetry()">Reintentar</button>
+                </div>
+
+            <!-- ============================================================
+                Contenido principal
+                ============================================================ -->
+            } @else {
+                @let products = productListState().data!;
+
+                <div class="account-products__header">
+                <h2 class="section-title">Mis productos</h2>
+                <a (click)="onTemplate('create')" class="btn btn-primary btn-sm">
+                    + Nuevo producto
+                </a>
+                </div>
+
+                @if (products.length > 0) {
+                    <ul class="product-list">
+                        @for (p of products; track p.id) {
+                            <li
+                                class="product-card"
+                                [class.product-card--deleted]="p.status === productStatus.DELETED"
+                                [class.product-card--banned]="p.status === productStatus.BANNED"
+                            >
+                            <!-- Encabezado de la tarjeta -->
+                            <div class="product-card__header">
+                                @if (p.thumbnail) {
+                                    <img
+                                    [src]="p.thumbnail"
+                                    [alt]="p.title"
+                                    class="product-card__thumb"
+                                    />
+                                } @else {
+                                    <div class="product-card__thumb product-card__thumb--placeholder" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    </div>
+                                }
+
+                                <div class="product-card__meta">
+                                    <a
+                                    [routerLink]="['/product', p.id]"
+                                    class="product-card__title"
+                                    >
+                                    {{ p.title }}
+                                    </a>
+                                    <p class="product-card__category text-muted">{{ p.category }}</p>
+                                    <div class="product-card__badges">
+                                    @switch (p.status) {
+                                        @case (productStatus.ACTIVE) {
+                                        <span class="badge badge--primary">Activo</span>
+                                        }
+                                        @case (productStatus.UNAVAILABLE) {
+                                        <span class="badge badge--accent">No disponible</span>
+                                        }
+                                        @case (productStatus.DELETED) {
+                                        <span class="badge badge--danger">Eliminado</span>
+                                        }
+                                        @case (productStatus.BANNED) {
+                                        <span class="badge badge--danger">Baneado</span>
+                                        }
+                                    }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Datos del producto -->
+                            <div class="product-card__data">
+                                <dl class="product-card__data-list">
+                                    <div class="product-card__data-item">
+                                    <dt>Precio</dt>
+                                    <dd>${{ p.price | number:'1.2-2' }}</dd>
+                                    </div>
+                                    <div class="product-card__data-item">
+                                    <dt>Descuento</dt>
+                                    <dd>{{ p.discountPercentage }}%</dd>
+                                    </div>
+                                    <div class="product-card__data-item">
+                                    <dt>Stock</dt>
+                                    <dd>{{ p.stock }}</dd>
+                                    </div>
+                                    <div class="product-card__data-item">
+                                    <dt>Valoración</dt>
+                                    <dd>{{ p.ratingAvg | number:'1.1-1' }} / 5</dd>
+                                    </div>
+                                </dl>
+                            </div>
+
+                            <!-- Acciones según estado -->
+                            @switch (p.status) {
+
+                                <!-- DELETED: solo restaurar -->
+                                @case (productStatus.DELETED) {
+                                    <div class="product-card__actions">
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        [disabled]="processing().has(p.id)"
+                                        (click)="onRestoreProduct(p.id)"
+                                    >
+                                        @if (processing().has(p.id)) {
+                                        <span class="spinner" aria-hidden="true"></span>
+                                        }
+                                        Restaurar
+                                    </button>
+                                    </div>
+                                }
+
+                                <!-- BANNED: solo lectura, sin acciones -->
+                                @case (productStatus.BANNED) {
+                                    <p class="product-card__banned-notice alert alert--error">
+                                    Este producto fue baneado por incumplir los términos y condiciones. Contactá con soporte para elevar un reclamo.
+                                    </p>
+                                }
+
+                                <!-- ACTIVE / UNAVAILABLE: inputs de edición rápida + eliminar -->
+                                @default {
+                                    <div class="product-card__quick-edit">
+                                    <div class="quick-edit__group">
+                                        <label [for]="'price-' + p.id">Precio ($)</label>
+                                        <div class="quick-edit__input-row">
+                                        <input
+                                            [id]="'price-' + p.id"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            [value]="p.price"
+                                            #priceInput
+                                            [disabled]="processing().has(p.id)"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            [disabled]="processing().has(p.id)"
+                                            (click)="onUpdatePrice(p.id, +priceInput.value)"
+                                        >
+                                            @if (processing().has(p.id)) {
+                                            <span class="spinner" aria-hidden="true"></span>
+                                            } @else {
+                                            Actualizar
+                                            }
+                                        </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-edit__group">
+                                        <label [for]="'discount-' + p.id">Descuento (%)</label>
+                                        <div class="quick-edit__input-row">
+                                        <input
+                                            [id]="'discount-' + p.id"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            [value]="p.discountPercentage"
+                                            #discountInput
+                                            [disabled]="processing().has(p.id)"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            [disabled]="processing().has(p.id)"
+                                            (click)="onUpdateDiscount(p.id, +discountInput.value)"
+                                        >
+                                            @if (processing().has(p.id)) {
+                                            <span class="spinner" aria-hidden="true"></span>
+                                            } @else {
+                                            Actualizar
+                                            }
+                                        </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="quick-edit__group">
+                                        <label [for]="'stock-' + p.id">Stock</label>
+                                        <div class="quick-edit__input-row">
+                                        <input
+                                            [id]="'stock-' + p.id"
+                                            type="number"
+                                            step="1"
+                                            min="0"
+                                            [value]="p.stock"
+                                            #stockInput
+                                            [disabled]="processing().has(p.id)"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            [disabled]="processing().has(p.id)"
+                                            (click)="onUpdateStock(p.id, +stockInput.value)"
+                                        >
+                                            @if (processing().has(p.id)) {
+                                            <span class="spinner" aria-hidden="true"></span>
+                                            } @else {
+                                            Actualizar
+                                            }
+                                        </button>
+                                        </div>
+                                    </div>
+                                    </div>
+
+                                    <div class="product-card__actions">
+                                    <a
+                                        (click)="onTemplate('update', p.id)"
+                                        class="btn btn-ghost btn-sm"
+                                    >
+                                        Editar completo
+                                    </a>
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-sm"
+                                        [disabled]="processing().has(p.id)"
+                                        (click)="onDeleteProduct(p.id)"
+                                    >
+                                        @if (processing().has(p.id)) {
+                                        <span class="spinner" aria-hidden="true"></span>
+                                        }
+                                        Eliminar
+                                    </button>
+                                    </div>
+                                }
+                            }
+                            </li>
+                        }
+                    </ul>
+                } @else {
+                    <div class="account-products__empty">
+                        <p class="account-products__empty-msg">
+                        Todavía no tenés productos publicados.
+                        </p>
+                        <a (click)="onTemplate('create')" class="btn btn-primary">
+                        Publicar mi primer producto
+                        </a>
+                    </div>
                 }
             }
         }
-    }@else {
-        <!-- Actualmente no tiene productos publicados. -->
+        @case ('create') {
+            <app-product-create (onReturn)="onTemplate('list')"/>
+        }
+        @case ('update') {
+            <app-product-update 
+                [productId]="productId!" 
+                (onReturn)="onTemplate('list')"
+            />
+        }
     }
-}
+</div>

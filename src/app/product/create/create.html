@@ -1,8 +1,280 @@
-<form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="create-form">
-    
-    <!-- Botón de Envío -->
-    <button type="submit" [disabled]="productForm.invalid || loading()" class="submit-btn">
-        Crear Producto
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
+  <h2>Crear Producto</h2>
+
+  <!-- Datos básicos -->
+  <div class="form-group">
+    <label for="pc-title">Título *</label>
+    <input
+      id="pc-title"
+      type="text"
+      formControlName="title"
+      placeholder="Ej: Auriculares Bluetooth Pro"
+      autocomplete="off"
+    />
+    @if (productForm.get('title')?.touched && productForm.get('title')?.invalid) {
+      <small class="error-msg">El título debe tener entre 4 y 250 caracteres.</small>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="pc-description">Descripción *</label>
+    <textarea
+      id="pc-description"
+      formControlName="description"
+      rows="3"
+      placeholder="Describe el producto..."
+    ></textarea>
+    @if (productForm.get('description')?.touched && productForm.get('description')?.invalid) {
+      <small class="error-msg">La descripción es requerida.</small>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="pc-category">Categoría *</label>
+    <select id="pc-category" formControlName="category">
+      <option value="" disabled>Selecciona una categoría</option>
+      @for (cat of categories; track cat) {
+        <option [value]="cat">{{ cat }}</option>
+      }
+    </select>
+    @if (productForm.get('category')?.touched && productForm.get('category')?.invalid) {
+      <small class="error-msg">Selecciona una categoría.</small>
+    }
+  </div>
+
+  <!-- Precios y Stock -->
+  <div class="form-row">
+    <div class="form-group">
+      <label for="pc-price">Precio ($) *</label>
+      <input
+        id="pc-price"
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="price"
+        placeholder="0.00"
+      />
+      @if (productForm.get('price')?.touched && productForm.get('price')?.invalid) {
+        <small class="error-msg">El precio mínimo es 0.</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="pc-discount">
+        Descuento (%)
+        <span class="product-form__optional">(opcional)</span>
+      </label>
+      <input
+        id="pc-discount"
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="discountPercentage"
+        placeholder="0.00"
+      />
+      @if (productForm.get('discountPercentage')?.touched && productForm.get('discountPercentage')?.invalid) {
+        <small class="error-msg">El descuento mínimo es 0.</small>
+      }
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="pc-stock">Stock *</label>
+      <input
+        id="pc-stock"
+        type="number"
+        step="1"
+        min="0"
+        formControlName="stock"
+        placeholder="0"
+      />
+      @if (productForm.get('stock')?.touched && productForm.get('stock')?.invalid) {
+        <small class="error-msg">El stock mínimo es 0.</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="pc-weight">Peso (kg) *</label>
+      <input
+        id="pc-weight"
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="weight"
+        placeholder="0.00"
+      />
+      @if (productForm.get('weight')?.touched && productForm.get('weight')?.invalid) {
+        <small class="error-msg">El peso mínimo es 0.</small>
+      }
+    </div>
+  </div>
+
+  <!-- Marca y Logística -->
+  <div class="form-group">
+    <label for="pc-brand">
+      Marca *
+      <span class="product-form__optional">(opcional)</span>
+    </label>
+    <input
+      id="pc-brand"
+      type="text"
+      formControlName="brand"
+      placeholder="Ej: Samsung"
+      autocomplete="off"
+    />
+    @if (productForm.get('brand')?.touched && productForm.get('brand')?.invalid) {
+      <small class="error-msg">Máximo 100 caracteres.</small>
+    }
+  </div>
+
+  <div class="form-group checkbox-group">
+    <input id="pc-physical" type="checkbox" formControlName="physical" />
+    <label for="pc-physical">Es un producto físico</label>
+  </div>
+
+  <div class="form-group">
+    <label for="pc-warranty">
+      Garantía
+      <span class="product-form__optional">(opcional)</span>
+    </label>
+    <input
+      id="pc-warranty"
+      type="text"
+      formControlName="warrantyInfo"
+      placeholder="Ej: 1 año de garantía de fábrica"
+      autocomplete="off"
+    />
+    @if (productForm.get('warrantyInfo')?.touched && productForm.get('warrantyInfo')?.invalid) {
+      <small class="error-msg">Máximo 250 caracteres.</small>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="pc-shipping">
+      Info de envío
+      <span class="product-form__optional">(opcional)</span>
+    </label>
+    <input
+      id="pc-shipping"
+      type="text"
+      formControlName="shippingInfo"
+      placeholder="Ej: Envío en 3-5 días hábiles"
+      autocomplete="off"
+    />
+    @if (productForm.get('shippingInfo')?.touched && productForm.get('shippingInfo')?.invalid) {
+      <small class="error-msg">Máximo 250 caracteres.</small>
+    }
+  </div>
+
+  <!-- Multimedia -->
+  <div class="form-group">
+    <label for="pc-thumbnail">
+      URL de miniatura
+      <span class="product-form__optional">(opcional)</span>
+    </label>
+    <input
+      id="pc-thumbnail"
+      type="url"
+      formControlName="thumbnail"
+      placeholder="https://ejemplo.com/imagen.jpg"
+      autocomplete="off"
+    />
+    @if (productForm.get('thumbnail')?.touched && productForm.get('thumbnail')?.invalid) {
+      <small class="error-msg">La URL excede los 500 caracteres.</small>
+    }
+  </div>
+
+  <!-- Etiquetas (Tags) -->
+  <div class="form-section">
+    <h3>Etiquetas (Tags)</h3>
+    <div class="form-section__add-row">
+      <input
+        #tagInput
+        type="text"
+        placeholder="Ej: nuevo-ingreso"
+        (keydown.enter)="$event.preventDefault(); addTag(tagInput)"
+      />
+      <button type="button" class="btn-add" (click)="addTag(tagInput)">
+        + Añadir
+      </button>
+    </div>
+
+    <div class="array-container">
+      @for (tag of productForm.get('tags')?.value; track $index) {
+        <div class="array-item">
+          <span class="array-item__text">{{ tag }}</span>
+          <button
+            type="button"
+            class="btn-remove"
+            (click)="removeItem('tags', $index)"
+            [attr.aria-label]="'Eliminar etiqueta ' + tag"
+          >
+            Eliminar
+          </button>
+        </div>
+      } @empty {
+        <p class="empty-msg">No hay etiquetas asignadas.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Imágenes -->
+  <div class="form-section">
+    <h3>Imágenes del Producto</h3>
+    <div class="form-section__add-row">
+      <input
+        #imgInput
+        type="url"
+        placeholder="https://ejemplo.com/imagen.jpg"
+        (keydown.enter)="$event.preventDefault(); addImage(imgInput)"
+      />
+      <button type="button" class="btn-add" (click)="addImage(imgInput)">
+        + Añadir
+      </button>
+    </div>
+
+    <div class="array-container">
+      @for (img of productForm.get('images')?.value; track $index) {
+        <div class="array-item-vertical">
+          <div class="input-row">
+            <span class="array-item__text truncate">{{ img }}</span>
+            <button
+              type="button"
+              class="btn-remove"
+              (click)="removeItem('images', $index)"
+              aria-label="Eliminar imagen"
+            >
+              Eliminar
+            </button>
+          </div>
+          <img [src]="img" alt="Vista previa de imagen" class="img-preview" />
+        </div>
+      } @empty {
+        <p class="empty-msg">No hay imágenes cargadas.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="form-actions">
+    <button
+      type="submit"
+      class="btn btn-primary"
+      [disabled]="productForm.invalid || loading()"
+    >
+      @if (loading()) {
+        <span class="spinner" aria-hidden="true"></span>
+      }
+      Crear Producto
     </button>
-    <button [disabled]="loading()" (click)="onCancel()">Cancelar</button>
+    <button
+      type="button"
+      class="btn btn-ghost"
+      [disabled]="loading()"
+      (click)="onCancel()"
+    >
+      Cancelar
+    </button>
+  </div>
 </form>

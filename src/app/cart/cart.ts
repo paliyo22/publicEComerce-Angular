@@ -3,6 +3,7 @@ import { CartService } from './cart-service';
 import { CartProductSchema } from '../../schemas/cart-schemas';
 import { Checkout } from '../checkout/checkout';
 import { RouterLink } from "@angular/router";
+import { AlertService } from '../alert-component/alert-service';
 
 @Component({
   selector: 'app-cart',
@@ -13,11 +14,22 @@ import { RouterLink } from "@angular/router";
 })
 export class Cart implements OnInit {
   private readonly cartService = inject(CartService);
+  private readonly alertService = inject(AlertService);
   protected readonly state = this.cartService.state;
   
   protected cart = signal(true);
   protected cartProduct = null as CartProductSchema | null;
   protected processing = signal(new Set<string>());
+  protected pendingAmounts = signal(new Map<string, number>());
+
+  onAmountInput(id: string, value: string){
+    const newAmount = +value;
+    this.pendingAmounts.update((map) => {
+      const newMap = new Map(map);
+      newMap.set(id, newAmount);
+      return newMap;
+    });
+  }
 
   addToSignal(id: string){
     this.processing.update((set) => new Set(set).add(id));
@@ -51,6 +63,11 @@ export class Cart implements OnInit {
     this.addToSignal(id);
     const result = await this.cartService.changeProductAmount(id, newAmount);
     this.deleteFromSignal(id);
+    this.pendingAmounts.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(id);
+      return newMap;
+    });
     if(result) this.errorManager(`actualizar el producto ${title}.`, result);
   };
 
@@ -92,7 +109,7 @@ export class Cart implements OnInit {
         message = 'Error al ' + action;
         break;
     };
-    // alerta de error con el contenido de "message"
+    this.alertService.setAlert(message, 'error');
   }
 }
 

@@ -1,147 +1,666 @@
-<button [disabled]="processing()" (click)="onChange('movements')"></button>
-<button [disabled]="processing()" (click)="onChange('incomeList')"></button>
-<button [disabled]="processing()" (click)="onChange('withdrawalList')"></button>
-<button [disabled]="processing()" (click)="onChange('withdrawal')"></button>
+<div class="balance">
 
-@if (processing()) {
-    <!-- mensaje de cargando, podria desactivar los botones para obligar al usuario a esperar la resolucion -->
-}@else {
+  <!-- ============================================================
+       Tabs de navegación
+       ============================================================ -->
+  <div class="balance__tabs" role="tablist" aria-label="Secciones de balance">
+    <button
+      type="button"
+      role="tab"
+      class="balance__tab"
+      [class.balance__tab--active]="show() === 'movements'"
+      [attr.aria-selected]="show() === 'movements'"
+      [disabled]="processing()"
+      (click)="onChange('movements')"
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Movimientos
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="balance__tab"
+      [class.balance__tab--active]="show() === 'incomeList'"
+      [attr.aria-selected]="show() === 'incomeList'"
+      [disabled]="processing()"
+      (click)="onChange('incomeList')"
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="12" y1="1" x2="12" y2="23"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+      Ingresos
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="balance__tab"
+      [class.balance__tab--active]="show() === 'withdrawalList'"
+      [attr.aria-selected]="show() === 'withdrawalList'"
+      [disabled]="processing()"
+      (click)="onChange('withdrawalList')"
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+        <line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+      Retiros
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="balance__tab balance__tab--action"
+      [class.balance__tab--active]="show() === 'withdrawal'"
+      [attr.aria-selected]="show() === 'withdrawal'"
+      [disabled]="processing()"
+      (click)="onChange('withdrawal')"
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+      Retirar fondos
+    </button>
+  </div>
+
+  <!-- ============================================================
+       Estado global: procesando
+       ============================================================ -->
+  @if (processing()) {
+    <div class="balance__state">
+      <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Procesando"></span>
+      <p class="balance__state-msg">Procesando, por favor aguardá...</p>
+    </div>
+
+  } @else {
+
+    <!-- ==========================================================
+         Switch de vistas
+         ========================================================== -->
     @switch (show()) {
-        @case ('movements') {
-            @if (withdrawalState().loading || incomeState().loading) {
-                <!-- cargando -->
-            } @else if (withdrawalState().error && incomeState().error) {
-                <!-- error con botón de recargar -->
-                 <button (click)="onRetry()">Reintentar</button>
-            } @else {
-                @if (records().length > 0) {
-                    @let rec = records();
-                    <!-- algo similar a esto, podrian tener distintos colores de fonco para diferenciar ingresos de retiros. -->
-                    @for (r of rec; track $index) {
-                        @if(r.type === 'income'){
-                            <p>{{r.orderId}}</p>
-                            <p>{{r.amount}}</p>
-                            <p>{{r.created}}</p>
-                        }@else {
-                            <p>{{r.amount}}</p>
-                            <p>{{r.status}}</p>
-                            <p>{{r.cbu}}</p>
-                            <p>{{r.created}}</p>
-                        }
-                    }
-                    <button (click)="onRetry()">Actualizar</button>
+
+      <!-- --------------------------------------------------------
+           Vista: Movimientos
+           -------------------------------------------------------- -->
+      @case ('movements') {
+
+        @if (withdrawalState().loading || incomeState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando movimientos"></span>
+          </div>
+
+        } @else if (withdrawalState().error && incomeState().error) {
+          <div class="balance__state">
+            <p class="alert alert--error">
+              No pudimos cargar los movimientos. Verificá tu conexión e intentá nuevamente.
+            </p>
+            <button type="button" class="btn btn-primary" (click)="onRetry()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Reintentar
+            </button>
+          </div>
+
+        } @else {
+          <div class="balance__toolbar">
+            <h1 class="balance__title section-title">Movimientos</h1>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="onRetry()" title="Actualizar">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+
+          @if (records().length > 0) {
+            <ul class="balance__movement-list" aria-label="Lista de movimientos">
+              @for (r of records(); track $index) {
+                @if (r.type === 'income') {
+                  <li class="balance__movement-item balance__movement-item--income">
+                    <div class="balance__movement-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                      </svg>
+                    </div>
+                    <div class="balance__movement-info">
+                      <span class="balance__movement-label">Ingreso</span>
+                      <span class="balance__movement-sub">Orden #{{ r.orderId }}</span>
+                    </div>
+                    <div class="balance__movement-right">
+                      <span class="balance__movement-amount balance__movement-amount--income">
+                        +${{ r.amount }}
+                      </span>
+                      <time class="balance__movement-date">{{ r.created | date:'dd/MM/yyyy' : 'UTC-3' }}</time>
+                    </div>
+                  </li>
                 } @else {
-                    <!-- estado vacío -->
+                  <li class="balance__movement-item balance__movement-item--withdrawal">
+                    <div class="balance__movement-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                      </svg>
+                    </div>
+                    <div class="balance__movement-info">
+                      <span class="balance__movement-label">Retiro</span>
+                      <span class="balance__movement-sub">CBU {{ r.cbu }}</span>
+                    </div>
+                    <div class="balance__movement-right">
+                      <span class="balance__movement-amount balance__movement-amount--withdrawal">
+                        -${{ r.amount }}
+                      </span>
+                      <div class="balance__movement-meta">
+                        <span class="balance__movement-status"
+                              [class.balance__movement-status--ok]="r.status === 'completed'"
+                              [class.balance__movement-status--pending]="r.status === 'pending'"
+                              [class.balance__movement-status--err]="r.status === 'failed'">
+                          {{ r.status }}
+                        </span>
+                        <time class="balance__movement-date">{{ r.created | date:'dd/MM/yyyy' : 'UTC-3' }}</time>
+                      </div>
+                    </div>
+                  </li>
                 }
-            }
+              }
+            </ul>
+          } @else {
+            <div class="balance__empty">
+              <svg class="balance__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+              <p class="balance__empty-msg">Todavía no hay movimientos registrados.</p>
+            </div>
+          }
         }
-        @case ('incomeList') {
-            @if (incomeVariationsState().loading) {
-                <!-- spiner -->
-            }@else if (incomeVariationsState().error){
-                @switch (incomeVariationsState().error) {
-                    @case ('TIMEOUT') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('UNAVAILABLE') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('INTERNAL_ERROR') {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
-                    }
-                    @default {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-                    }
-                }
-                <button (click)="onCleanVariationError()">Ok</button>
-            }@else {
-                <p>{{incomeVariationsState().data!.total}}</p>
-                <p>{{incomeVariationsState().data!.since}}</p>
-                <p>{{incomeVariationsState().data!.until}}</p>
-                <!-- aca un forms o un imput que pida fecha de "desde" y fecha de "hasta", puede dejar los 2 en blanco -->
-                <button (click)="onGetVariations()"></button>
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: Lista de ingresos
+           -------------------------------------------------------- -->
+      @case ('incomeList') {
+
+        <div class="balance__toolbar">
+          <h1 class="balance__title section-title">Ingresos</h1>
+        </div>
+
+        <!-- Filtro de rango de fechas (siempre visible) -->
+        <div class="balance__date-filter card" aria-label="Filtrar por fechas">
+          <div class="card__body balance__date-filter-body">
+            <div class="form-group">
+              <label for="income-since">Desde <span class="balance__date-optional">(opcional)</span></label>
+              <input id="income-since" type="date" [formControl]="sinceControl" />
+            </div>
+            <div class="form-group">
+              <label for="income-until">Hasta <span class="balance__date-optional">(opcional)</span></label>
+              <input id="income-until" type="date" [formControl]="untilControl" />
+            </div>
+            <button type="button" class="btn btn-primary balance__date-filter-btn" (click)="onGetVariations()">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              Calcular
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen de variaciones (independiente del listado) -->
+        @if (incomeVariationsState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand" role="status" aria-label="Cargando resumen"></span>
+          </div>
+
+        } @else if (incomeVariationsState().error) {
+          <div class="balance__state">
+            @switch (incomeVariationsState().error) {
+              @case ('TIMEOUT') {
+                <p class="alert alert--error">La solicitud tardó demasiado. Intentá nuevamente.</p>
+              }
+              @case ('UNAVAILABLE') {
+                <p class="alert alert--error">Estamos realizando mantenimiento. Aguardá unos minutos.</p>
+              }
+              @case ('INTERNAL_ERROR') {
+                <p class="alert alert--error">Ocurrió un error inesperado. Intentá nuevamente.</p>
+              }
+              @case ('PARSE_ERROR') {
+                <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+              }
+              @case ('BAD_REQUEST') {
+                <p class="alert alert--error">Error, no puede ingresar solamente el dato hasta.</p>
+              }
+              @default {
+                <p class="alert alert--error">
+                  Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+                </p>
+              }
             }
-            @if (incomeState().loading) {
-                <!-- aca se muestra el mensaje de cargando -->
-            }@else if (incomeState().error) {
-                @switch (incomeState().error) {
-                    @case ('TIMEOUT') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('UNAVAILABLE') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('INTERNAL_ERROR') {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
-                    }
-                    @default {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-                    }
-                }
-                <button (click)="onRetry()">Reintentar</button>
-            }@else {
-                <!-- aca muestro la lista completa -->
-                <button (click)="onRetry()">Actualizar</button>
-            }
+            <button type="button" class="btn btn-ghost" (click)="onCleanVariationError()">Cerrar</button>
+          </div>
+
+        } @else if (incomeVariationsState().data) {
+          <div class="balance__summary-card card">
+            <div class="card__body balance__summary-body">
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Total del período</span>
+                <span class="balance__summary-value balance__summary-value--income">
+                  ${{ incomeVariationsState().data?.total }}
+                </span>
+              </div>
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Desde</span>
+                <span class="balance__summary-value">
+                  {{ incomeVariationsState().data?.since
+                    ? (incomeVariationsState().data?.since | date:'dd/MM/yyyy' : 'UTC-3')
+                    : '—' }}
+                </span>
+              </div>
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Hasta</span>
+                <span class="balance__summary-value">
+                  {{ incomeVariationsState().data?.until
+                    ? (incomeVariationsState().data?.until | date:'dd/MM/yyyy' : 'UTC-3')
+                    : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
         }
-        @case ('withdrawalList') {
-            @if (expensesVariationsState().loading) {
-                <!-- spiner -->
-            }@else if (expensesVariationsState().error) {
-                @switch (expensesVariationsState().error) {
-                    @case ('TIMEOUT') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('UNAVAILABLE') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('INTERNAL_ERROR') {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
-                    }
-                    @default {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-                    }
-                }
-                <button (click)="onCleanVariationError()">Ok</button>
-            }@else {
-                <p>{{expensesVariationsState().data!.total}}</p>
-                <p>{{expensesVariationsState().data!.since}}</p>
-                <p>{{expensesVariationsState().data!.until}}</p>
-                <!-- aca un forms o un imput que pida fecha de "desde" y fecha de "hasta", puede dejar los 2 en blanco -->
-                <button (click)="onGetVariations()"></button>
+
+        <!-- Lista de ingresos (independiente del resumen) -->
+        @if (incomeState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand" role="status" aria-label="Cargando ingresos"></span>
+          </div>
+
+        } @else if (incomeState().error) {
+          <div class="balance__state">
+            @switch (incomeState().error) {
+              @case ('TIMEOUT') {
+                <p class="alert alert--error">La solicitud tardó demasiado. Intentá nuevamente.</p>
+              }
+              @case ('UNAVAILABLE') {
+                <p class="alert alert--error">Estamos realizando mantenimiento. Aguardá unos minutos.</p>
+              }
+              @case ('INTERNAL_ERROR') {
+                <p class="alert alert--error">Ocurrió un error inesperado. Intentá nuevamente.</p>
+              }
+              @case ('PARSE_ERROR') {
+                <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+              }
+              @default {
+                <p class="alert alert--error">
+                  Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+                </p>
+              }
             }
-            @if (withdrawalState().loading) {
-                <!-- aca se muestra el mensaje de cargando -->
-            }@else if (withdrawalState().error) {
-                @switch (withdrawalState().error) {
-                    @case ('TIMEOUT') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('UNAVAILABLE') {
-                        <!-- es un error interno, se puede reintentar. -->
-                    }
-                    @case ('INTERNAL_ERROR') {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. -->
-                    }
-                    @default {
-                        <!-- ah ocurrido un error inesperado, intente nuevamente. Si el error persiste contacte a soporte tecnico -->
-                    }
-                }
-                <button (click)="onRetry()">Reintentar</button>
-            }@else {
-                <!-- aca muestro la lista completa -->
-                <button (click)="onRetry()">Actualizar</button>
-            }
+            <button type="button" class="btn btn-primary" (click)="onRetry()">Reintentar</button>
+          </div>
+
+        } @else {
+          @let incomeList = incomeState().data!;
+
+          <div class="balance__list-toolbar">
+            <span class="balance__list-count">{{ incomeList.length }} registro{{ incomeList.length !== 1 ? 's' : '' }}</span>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="onRetry()" title="Actualizar">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+
+          @if (incomeList.length === 0) {
+            <div class="balance__empty">
+              <svg class="balance__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              <p class="balance__empty-msg">No hay ingresos en el período seleccionado.</p>
+            </div>
+          } @else {
+            <ul class="balance__record-list" aria-label="Lista de ingresos">
+              @for (item of incomeList; track $index) {
+                <li class="balance__record-item card">
+                  <div class="card__body balance__record-body">
+                    <div class="balance__record-header">
+                      <span class="balance__record-ref">Orden <strong>#{{ item.orderId }}</strong></span>
+                      <span class="balance__record-amount balance__record-amount--income">
+                        +${{ item.amount }}
+                      </span>
+                    </div>
+                    <div class="balance__record-meta">
+                      <time class="balance__record-meta-row">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6"/>
+                          <line x1="8" y1="2" x2="8" y2="6"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        {{ item.created | date:'dd/MM/yyyy' : 'UTC-3' }}
+                      </time>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
         }
-        @case ('withdrawal') {
-            @if (balanceState().loading) {
-                <!-- aca se muestra el mensaje de cargando -->
-            }@else if (balanceState().error) {
-                <!-- aca se muestra mensaje de error en el sistema, contacte a soporte tecnico -->
-                <button (click)="onRetry()">Reintentar</button>
-            }@else {
-                <!-- input o form para que no pueda ingrast numeros negativos o un valor mayor al balanceState().data.amount -->
+      }
+
+      <!-- --------------------------------------------------------
+          Vista: Lista de retiros
+          -------------------------------------------------------- -->
+      @case ('withdrawalList') {
+
+        <div class="balance__toolbar">
+          <h2 class="balance__title section-title">Gastos</h2>
+        </div>
+
+        <!-- Filtro de rango de fechas (siempre visible) -->
+        <div class="balance__date-filter card" aria-label="Filtrar por fechas">
+          <div class="card__body balance__date-filter-body">
+            <div class="form-group">
+              <label for="withdrawal-since">Desde <span class="balance__date-optional">(opcional)</span></label>
+              <input id="withdrawal-since" type="date" [formControl]="sinceControl" />
+            </div>
+            <div class="form-group">
+              <label for="withdrawal-until">Hasta <span class="balance__date-optional">(opcional)</span></label>
+              <input id="withdrawal-until" type="date" [formControl]="untilControl" />
+            </div>
+            <button type="submit" class="btn btn-primary balance__date-filter-btn" (click)="onGetVariations()">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              Calcular
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen de variaciones (independiente del listado) -->
+        @if (expensesVariationsState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand" role="status" aria-label="Cargando resumen"></span>
+          </div>
+
+        } @else if (expensesVariationsState().error) {
+          <div class="balance__state">
+            @switch (expensesVariationsState().error) {
+              @case ('TIMEOUT') {
+                <p class="alert alert--error">La solicitud tardó demasiado. Intentá nuevamente.</p>
+              }
+              @case ('UNAVAILABLE') {
+                <p class="alert alert--error">Estamos realizando mantenimiento. Aguardá unos minutos.</p>
+              }
+              @case ('INTERNAL_ERROR') {
+                <p class="alert alert--error">Ocurrió un error inesperado. Intentá nuevamente.</p>
+              }
+              @case ('PARSE_ERROR') {
+                <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+              }
+              @case ('BAD_REQUEST') {
+                <p class="alert alert--error">Error, no puede ingresar solamente el dato hasta.</p>
+              }
+              @default {
+                <p class="alert alert--error">
+                  Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+                </p>
+              }
             }
+            <button type="button" class="btn btn-ghost" (click)="onCleanVariationError()">Cerrar</button>
+          </div>
+
+        } @else if (expensesVariationsState().data) {
+          <div class="balance__summary-card card">
+            <div class="card__body balance__summary-body">
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Total del período</span>
+                <span class="balance__summary-value balance__summary-value--withdrawal">
+                  ${{ expensesVariationsState().data?.total }}
+                </span>
+              </div>
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Desde</span>
+                <span class="balance__summary-value">
+                  {{ expensesVariationsState().data?.since
+                    ? (expensesVariationsState().data?.since | date:'dd/MM/yyyy' : 'UTC-3')
+                    : '—' }}
+                </span>
+              </div>
+              <div class="balance__summary-stat">
+                <span class="balance__summary-label">Hasta</span>
+                <span class="balance__summary-value">
+                  {{ expensesVariationsState().data?.until
+                    ? (expensesVariationsState().data?.until | date:'dd/MM/yyyy' : 'UTC-3')
+                    : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
         }
+
+        <div class="balance__toolbar">
+          <h2 class="balance__title section-title">Retiros</h2>
+        </div>
+        <!-- Lista de retiros (independiente del resumen) -->
+        @if (withdrawalState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand" role="status" aria-label="Cargando retiros"></span>
+          </div>
+
+        } @else if (withdrawalState().error) {
+          <div class="balance__state">
+            @switch (withdrawalState().error) {
+              @case ('TIMEOUT') {
+                <p class="alert alert--error">La solicitud tardó demasiado. Intentá nuevamente.</p>
+              }
+              @case ('UNAVAILABLE') {
+                <p class="alert alert--error">Estamos realizando mantenimiento. Aguardá unos minutos.</p>
+              }
+              @case ('INTERNAL_ERROR') {
+                <p class="alert alert--error">Ocurrió un error inesperado. Intentá nuevamente.</p>
+              }
+              @case ('PARSE_ERROR') {
+                <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+              }
+              @default {
+                <p class="alert alert--error">
+                  Ocurrió un error inesperado. Si el problema persiste, contactá a soporte técnico.
+                </p>
+              }
+            }
+            <button type="button" class="btn btn-primary" (click)="onRetry()">Reintentar</button>
+          </div>
+
+        } @else {
+          @let withdrawalList = withdrawalState().data!;
+
+          <div class="balance__list-toolbar">
+            <span class="balance__list-count">{{ withdrawalList.length }} registro{{ withdrawalList.length !== 1 ? 's' : '' }}</span>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="onRetry()" title="Actualizar">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+
+          @if (withdrawalList.length === 0) {
+            <div class="balance__empty">
+              <svg class="balance__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+              </svg>
+              <p class="balance__empty-msg">No hay retiros en el período seleccionado.</p>
+            </div>
+          } @else {
+            <ul class="balance__record-list" aria-label="Lista de retiros">
+              @for (item of withdrawalList; track $index) {
+                <li class="balance__record-item card">
+                  <div class="card__body balance__record-body">
+                    <div class="balance__record-header">
+                      <div class="balance__record-info">
+                        <span class="balance__record-cbu">CBU {{ item.cbu }}</span>
+                        <span class="balance__record-status"
+                              [class.balance__record-status--ok]="item.status === 'completed'"
+                              [class.balance__record-status--pending]="item.status === 'pending'"
+                              [class.balance__record-status--err]="item.status === 'failed'">
+                          {{ item.status }}
+                        </span>
+                      </div>
+                      <span class="balance__record-amount balance__record-amount--withdrawal">
+                        -${{ item.amount }}
+                      </span>
+                    </div>
+                    <div class="balance__record-meta">
+                      <time class="balance__record-meta-row">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6"/>
+                          <line x1="8" y1="2" x2="8" y2="6"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        {{ item.created | date:'dd/MM/yyyy' : 'UTC-3' }}
+                      </time>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+
+      <!-- --------------------------------------------------------
+           Vista: Retirar fondos
+           -------------------------------------------------------- -->
+      @case ('withdrawal') {
+
+        @if (balanceState().loading) {
+          <div class="balance__state">
+            <span class="spinner spinner--brand spinner--lg" role="status" aria-label="Cargando saldo"></span>
+          </div>
+
+        } @else if (balanceState().error) {
+          <div class="balance__state">
+            <p class="alert alert--error">
+              No pudimos obtener tu saldo. Por favor contactá a soporte técnico.
+            </p>
+            <button type="button" class="btn btn-primary" (click)="onRetry()">Reintentar</button>
+          </div>
+
+        } @else {
+          @let balance = balanceState().data!;
+
+          <div class="balance__withdrawal-layout">
+
+            <!-- Saldo disponible -->
+            <div class="balance__available card">
+              <div class="card__body balance__available-body">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                     stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                     class="balance__available-icon" aria-hidden="true">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                <div>
+                  <p class="balance__available-label">Saldo disponible</p>
+                  <p class="balance__available-amount">${{ balance.balance }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Formulario de retiro -->
+            <form class="balance__withdraw-form account-form account-form--narrow"
+                  [formGroup]="withdrawalForm"
+                  (ngSubmit)="onWithdrawal()">
+
+              <div class="account-form__header">
+                <h2 class="account-form__title">Retirar fondos</h2>
+                <p class="account-form__subtitle">
+                  Ingresá el monto que querés retirar. No puede superar tu saldo disponible.
+                </p>
+              </div>
+
+              <div class="form-group">
+                <label for="withdrawal-amount">Monto a retirar</label>
+                <input
+                  id="withdrawal-amount"
+                  type="number"
+                  formControlName="amount"
+                  placeholder="0.00"
+                  min="1"
+                  [max]="balance.balance"
+                  step="0.01"
+                  inputmode="decimal"
+                />
+                @if (withdrawalForm.get('amount')?.touched) {
+                  @if (withdrawalForm.get('amount')?.hasError('required')) {
+                    <p class="field-error">El monto es requerido.</p>
+                  } @else if (withdrawalForm.get('amount')?.hasError('min')) {
+                    <p class="field-error">El monto debe ser mayor a cero.</p>
+                  } @else if (withdrawalForm.get('amount')?.hasError('max')) {
+                    <p class="field-error">El monto no puede superar tu saldo disponible (${{ balance.balance }}).</p>
+                  }
+                }
+              </div>
+
+              <div class="account-form__actions">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="withdrawalForm.invalid || processing()"
+                >
+                  @if (processing()) {
+                    <span class="spinner" aria-hidden="true"></span>
+                  }
+                  Confirmar retiro
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  [disabled]="processing()"
+                  (click)="onChange('movements')"
+                >
+                  Cancelar
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        }
+      }
+
     }
-}
+  }
+
+</div>

@@ -1,50 +1,218 @@
-@if (cart()){
-    @if (state().loading){
-        <!-- spinner y mensaje de cargando -->
-    }@else if (state().error) {
-        @switch (state().error) {
-            @case ('INTERNAL_ERROR') {
-                <!-- Algo ha fallado, vuelva a intentar o contacte con soporte. -->
-            }
-            @case ('TIMEOUT') {
-                <!-- Error al obtener los datos, vuelva a intentar. -->
-            }
-            @case ('UNAVAILABLE') {
-                <!-- Actualmente se estamos realizando mantenimiento. -->
-            }
-            @default {
-                <!-- ups! algo ha fallado, vuelva a intentar o contacte a soporte. -->
-            }
+@if (cart()) {
+
+  @if (state().loading) {
+    <div class="cart__state">
+      <span class="spinner spinner--brand" role="status" aria-label="Cargando carrito"></span>
+    </div>
+
+  } @else if (state().error) {
+    <div class="cart__state">
+      @switch (state().error) {
+        @case ('INTERNAL_ERROR') {
+          <p class="cart__state-msg">Algo ha fallado. Vuelva a intentar o contacte con soporte.</p>
         }
-        <button (click)="onRetry()">Recargar</button>
-    }@else {
-        @let cart = state().data;
-        
-        @if (!cart || cart.products.length === 0){
-            <!-- muestra pagina en blanco, se puede agregar "no hay productos actualmente" o algo similar. -->
-        }@else {
-            <button (click)="onDeleteCart()">Vaciar carrito</button>
-            <button (click)="onCheckout()">Comprar carrito</button>
-            <!-- muestra el carito -->
-            @for (p of cart.products; track p.cartProductId) {
-                <h2 [routerLink]="['/product', p.productId]">{{p.title}}</h2>
-                <button [disabled]="processing().has(p.cartProductId)" (click)="onDeleteProduct(p.cartProductId, p.title)">Eliminar</button>
-                <button [disabled]="processing().has(p.cartProductId)" (click)="onCheckout(p)">Realizar compra</button>
-                <!-- al mostrar la cantidad permitir que se pueda cambiar el numero, siempre positivo y mayor a 0,
-                    y si es distinto al original mostrar el boton confirmar para llamar al update -->
-            }
+        @case ('TIMEOUT') {
+          <p class="cart__state-msg">Error al obtener los datos. Vuelva a intentar.</p>
         }
+        @case ('UNAVAILABLE') {
+          <p class="cart__state-msg">Actualmente estamos realizando mantenimiento. Aguarde unos minutos.</p>
+        }
+        @case ('PARSE_ERROR') {
+          <p class="cart__state-msg">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
+        @default {
+          <p class="cart__state-msg">Ups! Algo ha fallado. Vuelva a intentar o contacte a soporte.</p>
+        }
+      }
+      <button type="button" class="btn btn-primary" (click)="onRetry()">Recargar</button>
+    </div>
+
+  } @else {
+    @let cartData = state().data;
+
+    @if (!cartData || cartData.products.length === 0) {
+      <div class="cart__state">
+        <svg class="cart__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        <p class="cart__state-msg">Tu carrito está vacío.</p>
+        <a class="btn btn-primary" routerLink="/">Ver productos</a>
+      </div>
+
+    } @else {
+      <div class="cart">
+
+        <!-- Encabezado -->
+        <div class="cart__header">
+          <h1 class="cart__title section-title">Mi carrito</h1>
+          <button
+            type="button"
+            class="btn btn-ghost cart__clear-btn"
+            (click)="onDeleteCart()"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+            Vaciar carrito
+          </button>
+        </div>
+
+        <div class="cart__layout">
+
+          <!-- Lista de productos -->
+          <ul class="cart__list" aria-label="Productos en el carrito">
+            @for (p of cartData.products; track p.cartProductId) {
+              <li class="cart__item">
+
+                <!-- Info del producto -->
+                <div class="cart__item-info">
+                  <a
+                    class="cart__item-title"
+                    [routerLink]="['/product', p.productId]"
+                  >{{ p.title }}</a>
+
+                  <div class="cart__item-pricing">
+                    <span class="cart__item-price">
+                      ${{ (p.price * (1 - p.discount / 100)).toFixed(2) }}
+                    </span>
+                    @if (p.discount > 0) {
+                      <span class="cart__item-original">${{ p.price.toFixed(2) }}</span>
+                      <span class="cart__item-discount">-{{ p.discount }}%</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Cantidad editable -->
+                <div class="cart__item-qty">
+                  <label class="sr-only" [for]="'qty-' + p.cartProductId">Cantidad</label>
+                  <input
+                    [id]="'qty-' + p.cartProductId"
+                    class="cart__qty-input"
+                    type="number"
+                    [value]="pendingAmounts().get(p.cartProductId) ?? p.amount"
+                    min="1"
+                    [disabled]="processing().has(p.cartProductId)"
+                    (input)="onAmountInput(p.cartProductId, $any($event.target).value)"
+                  />
+                  @let pending = pendingAmounts().get(p.cartProductId);
+                  @if (pending !== undefined && pending !== p.amount) {
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      [disabled]="processing().has(p.cartProductId)"
+                      (click)="onUpdateAmount(p.cartProductId, p.title, pending)"
+                    >
+                      @if (processing().has(p.cartProductId)) {
+                        <span class="spinner" aria-hidden="true"></span>
+                      } @else {
+                        Confirmar
+                      }
+                    </button>
+                  }
+                </div>
+
+                <!-- Subtotal -->
+                <span class="cart__item-subtotal">
+                  ${{ (p.price * (1 - p.discount / 100) * p.amount).toFixed(2) }}
+                </span>
+
+                <!-- Acciones del item -->
+                <div class="cart__item-actions">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    [disabled]="processing().has(p.cartProductId)"
+                    (click)="onCheckout(p)"
+                    [attr.aria-label]="'Comprar ' + p.title"
+                  >
+                    Comprar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost cart__item-delete"
+                    [disabled]="processing().has(p.cartProductId)"
+                    (click)="onDeleteProduct(p.cartProductId, p.title)"
+                    [attr.aria-label]="'Eliminar ' + p.title + ' del carrito'"
+                  >
+                    @if (processing().has(p.cartProductId)) {
+                      <span class="spinner" aria-hidden="true"></span>
+                    } @else {
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      Eliminar
+                    }
+                  </button>
+                </div>
+
+              </li>
+            }
+          </ul>
+
+          <!-- Resumen del pedido -->
+          <aside class="cart__summary card" aria-label="Resumen del carrito">
+            <div class="card__body">
+              <h2 class="cart__summary-title section-title">Resumen</h2>
+
+              <dl class="cart__summary-list">
+                <div class="cart__summary-row">
+                  <dt>Productos</dt>
+                  <dd>{{ cartData.products.length }}</dd>
+                </div>
+                <div class="cart__summary-row">
+                  <dt>Unidades</dt>
+                  <dd>{{ cartData.products.reduce((acc, p) => acc + p.amount, 0) }}</dd>
+                </div>
+                <hr class="divider" />
+                <div class="cart__summary-row cart__summary-total">
+                  <dt>Total estimado</dt>
+                  <dd>
+                    ${{ cartData.products
+                          .reduce((acc, p) => acc + p.price * (1 - p.discount / 100) * p.amount, 0)
+                          .toFixed(2) }}
+                  </dd>
+                </div>
+              </dl>
+
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                (click)="onCheckout()"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                Comprar carrito
+              </button>
+            </div>
+          </aside>
+
+        </div>
+      </div>
     }
-}@else {
-    @if (cartProduct) {
-        <app-checkout
-            [cartProduct]="cartProduct"
-            (cancel)="onCancel()"
-        />
-    }@else {
-        <app-checkout 
-            [cart]="state().data!"
-            (cancel)="onCancel()"
-        />
-    }
+  }
+
+} @else {
+  @if (cartProduct) {
+    <app-checkout
+      [cartProduct]="cartProduct"
+      (cancel)="onCancel()"
+    />
+  } @else {
+    <app-checkout
+      [cart]="state().data!"
+      (cancel)="onCancel()"
+    />
+  }
 }

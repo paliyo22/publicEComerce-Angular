@@ -15,6 +15,9 @@
         @case ('INTERNAL_ERROR') {
           <p class="catalog__state-msg">¡Ups! Parece que algo ha fallado, vuelva a intentar. Si el error persiste contacte con soporte.</p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="catalog__state-msg">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @default {
           <p class="catalog__state-msg">Error interno, intente nuevamente.</p>
         }

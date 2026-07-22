@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ECategory } from '../../../enum/category';
 import { validateNewProduct } from '../../../schemas/create-product-schema';
-import { Router } from '@angular/router';
 import { AccountProductsService } from '../../account/account-products/account-products-service';
+import { AlertService } from '../../alert-component/alert-service';
 
 @Component({
   selector: 'app-product-create',
@@ -15,13 +15,14 @@ import { AccountProductsService } from '../../account/account-products/account-p
 })
 export class ProductCreate implements OnInit {
   private readonly accountProductsService = inject(AccountProductsService);
-  private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
   private readonly fb = inject(FormBuilder);
 
   protected productForm!: FormGroup;
   protected categories = Object.values(ECategory);
 
   protected loading = signal(false);
+  onReturn = output<void>();
 
   ngOnInit(): void {
     this.productForm = this.fb.group({
@@ -31,7 +32,7 @@ export class ProductCreate implements OnInit {
       price: [0, [Validators.required, Validators.min(0)]],
       discountPercentage: [0, [Validators.min(0)]], 
       stock: [0, [Validators.required, Validators.min(0)]],
-      brand: ["", [Validators.required, Validators.maxLength(100)]],
+      brand: ["", [Validators.maxLength(100)]],
       weight: [0, [Validators.required, Validators.min(0)]],
       physical: [true, [Validators.required]],
       warrantyInfo: ["", [Validators.maxLength(250)]],
@@ -48,11 +49,12 @@ export class ProductCreate implements OnInit {
     const result = validateNewProduct(this.productForm.value);
 
     if (!result.success) {
-      console.error("Errores de validación en el esquema de Valibot:", result.issues);
+      this.alertService.setAlert('Error al procesar la informacion, contactá a soporte técnico.', 'error');
     }else{
       const response = await this.accountProductsService.createProduct(result.output);
       if(!response.error){
-        this.router.navigate(['/product', response.data]);
+        this.onReturn.emit();
+        return;
       }else{
         this.errorManager(response.data);
       }; 
@@ -92,8 +94,8 @@ export class ProductCreate implements OnInit {
     this.productForm.get(controlName)?.markAsDirty();
   }
 
-  onCancel(){
-    this.router.navigate(['/']);
+  onCancel() {
+    this.onReturn.emit();
   }
 
   errorManager(error: string){
@@ -118,6 +120,6 @@ export class ProductCreate implements OnInit {
         message = 'Ups! Parece que algo ha fallado, vuelva a intentar.';
         break;
     }
-    // alerta mostrando "message"
+    this.alertService.setAlert(message, 'error');
   }
 }

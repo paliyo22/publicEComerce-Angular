@@ -77,7 +77,7 @@
             <p class="review-item__comment">{{ r.comment }}</p>
           }
 
-          <p class="review-item__date">{{ r.created | date:'dd/MM/yyyy' }}</p>
+          <p class="review-item__date">{{ r.created | date:'dd/MM/yyyy hh:mm' : 'UTC-3' }}</p>
 
           <!-- Botón de eliminación (Solo visible en la reseña propia) -->
           @if (user && user.username === r.username) {

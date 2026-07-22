@@ -1,0 +1,299 @@
+/* ============================================================
+   Checkout component
+   ============================================================ */
+:host {
+  display: block;
+}
+
+/* ============================================================
+   Estado vacío / inesperado
+   ============================================================ */
+.checkout__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-block: 4rem;
+  text-align: center;
+}
+
+/* ============================================================
+   Título de sección reutilizado dentro del componente
+   ============================================================ */
+.checkout__section-title {
+  margin-block-end: 1rem;
+}
+
+/* ============================================================
+   Bloque de productos (siempre visible)
+   ============================================================ */
+.checkout__products {
+  margin-block-end: 1.75rem;
+}
+
+.checkout__product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-block-end: 1rem;
+}
+
+.checkout__product-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  column-gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.checkout__product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.checkout__product-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkout__product-qty {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.checkout__product-pricing {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.checkout__product-price {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.checkout__product-original {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.checkout__product-subtotal {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 5rem;
+  text-align: right;
+}
+
+.checkout__products-totals {
+  margin-block-start: 0.5rem;
+}
+
+/* ============================================================
+   Sección: formulario de dirección
+   ============================================================ */
+.checkout__form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ---- Selector de direcciones guardadas ---- */
+.checkout__saved-addresses {
+  margin-block-end: 1.25rem;
+}
+
+.checkout__saved-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-block-end: 0.75rem;
+}
+
+.checkout__addr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checkout__addr-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  text-align: left;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font: inherit;
+  color: inherit;
+}
+
+.checkout__addr-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.checkout__addr-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+}
+
+.checkout__addr-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.checkout__addr-line {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkout__addr-sub {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
+   Sección: productos no disponibles
+   ============================================================ */
+.checkout__unavailable {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkout__unavailable-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.checkout__unavailable-icon {
+  flex-shrink: 0;
+}
+
+.checkout__unavailable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.checkout__unavailable-item .card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.checkout__unavailable-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.checkout__unavailable-reason {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.checkout__unavailable-actions {
+  padding-block-start: 0.25rem;
+}
+
+/* ============================================================
+   Sección: draft — resumen de pago
+   ============================================================ */
+.checkout__draft-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .checkout__draft-layout {
+    grid-template-columns: 1fr 20rem;
+  }
+}
+
+.checkout__draft-addr-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-block-start: 0.75rem;
+}
+
+.checkout__draft-addr-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  margin-block-start: 0.125rem;
+}
+
+.checkout__draft-addr-text {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.checkout__confirm-error {
+  margin-block-end: 0.875rem;
+}
+
+.checkout__draft-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-block-start: 0.25rem;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 600px) {
+  .checkout__product-item {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    row-gap: 0.5rem;
+  }
+
+  .checkout__product-pricing {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .checkout__product-subtotal {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout__addr-item {
+    align-items: flex-start;
+  }
+}

@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { inject, Injectable, signal } from '@angular/core';
 import { timeout, tap, catchError, of, map, TimeoutError } from 'rxjs';
 import { environment } from '../../../../environments/environment.development';
-import { PartialProductSchema, validatePartialProduct } from '../../../../schemas/product-schemas';
+import { PartialProductSchema, validatePartialProductSchema } from '../../../../schemas/product-schemas';
 
 @Injectable({
   providedIn: 'root',
@@ -51,13 +51,9 @@ export class CatalogService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CatalogService]: Conection or network error on "getTotalProducts":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CatalogService]: "getTotalProducts": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.catalogSignal.update((state) => ({
@@ -83,20 +79,13 @@ export class CatalogService {
     .pipe(
       timeout(6700),
       map((data) => {
-        const rejections = new Array<any>(); 
-        const products = new Array<PartialProductSchema>(); 
-        data.forEach((p) => {
-          const result = validatePartialProduct(p);
-          if(!result.success){
-            rejections.push(p);
-          }else{
-            products.push(result.output);
-          };
+        return data.map((p) => {
+          const aux = validatePartialProductSchema(p);
+          if(!aux.success){
+            throw new Error('PARSE_ERROR');
+          }
+          return aux.output;
         });
-        if(rejections.length) 
-          console.warn(`[CatalogService] Error procesing ${rejections.length} partial products:`, rejections);
-        
-        return products;
       }),
       tap((response) => {
         this.catalogSignal.update((state) => {
@@ -105,7 +94,7 @@ export class CatalogService {
 
           if(offset === 0) {
             newItemsMap.clear();
-          }
+          };
           
           newItemsMap.set(page, response);
           return{
@@ -113,19 +102,19 @@ export class CatalogService {
             data: newItemsMap,
             loading: false,
             error: null
-          }
+          };
         });     
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[CatalogService]: Conection or network error on "getProductList":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          }; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[CatalogService]: "getProductList": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.catalogSignal.update((state) => ({

@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { PartialProductSchema, ProductSchema, validatePartialProduct } from '../../../schemas/product-schemas';
+import { PartialProductSchema, validatePartialProductSchema } from '../../../schemas/product-schemas';
 import { environment } from '../../../environments/environment.development';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, firstValueFrom, map, of, tap, timeout, TimeoutError } from 'rxjs';
@@ -47,20 +47,13 @@ export class AccountProductsService {
     ).pipe(
       timeout(6700),
       map((data) => {
-        const rejections = new Array<any>(); 
-        const products = new Array<PartialProductSchema>(); 
-        data.forEach((p) => {
-          const result = validatePartialProduct(p);
+        return data.map((p) => {
+          const result = validatePartialProductSchema(p);
           if(!result.success){
-            rejections.push(p);
-          }else{
-            products.push(result.output);
-          };
-        });
-        if(rejections.length) 
-          console.warn(`[AccountAccountProductService] Error procesing ${rejections.length} partial products:`, rejections);
-
-        return products;
+            throw new Error('PARSE_ERROR');
+          }
+          return result.output;
+        })
       }),
       tap((result) => {
         this.accountSignal.update(() => ({
@@ -72,13 +65,13 @@ export class AccountProductsService {
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AccountProductService]: Conection or network error on "getMyProducts":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR'; 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountProductService]: "getMyProducts": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.accountSignal.update((state) => ({
@@ -93,7 +86,7 @@ export class AccountProductsService {
 
   async updateDiscount(productId: string, discount: number): Promise<void | string>{
     try{
-      const result = await firstValueFrom(
+      await firstValueFrom(
         withAuthRetry<void>(() => 
           this.http.patch<void>(`${this.apiUrl}/product/discount/${productId}`, { discount }, { withCredentials: true }),
           this.authService
@@ -107,13 +100,9 @@ export class AccountProductsService {
     }catch (err: any){
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AccountProductService]: Conection or network error on "updateDiscount":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AccountProductService]: "updateDiscount": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     }
@@ -121,7 +110,7 @@ export class AccountProductsService {
 
   async updatePrice(productId: string, price: number): Promise<void | string>{
     try {
-      const result = await firstValueFrom(
+      await firstValueFrom(
         withAuthRetry<void>(() => 
           this.http.patch<void>(`${this.apiUrl}/product/price/${productId}`, { price }, { withCredentials: true }),
           this.authService
@@ -135,13 +124,9 @@ export class AccountProductsService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AccountProductService]: Conection or network error on "updatePrice":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AccountProductService]: "updatePrice": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
 
       return errorMessage;
@@ -150,7 +135,7 @@ export class AccountProductsService {
 
   async updateStock(productId: string, stock: number): Promise<void | string>{
     try {
-      const result = await firstValueFrom(
+      await firstValueFrom(
         withAuthRetry<void>(() => 
           this.http.patch<void>(`${this.apiUrl}/product/stock/${productId}`, { stock }, { withCredentials: true }),
           this.authService
@@ -164,13 +149,9 @@ export class AccountProductsService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AccountProductService]: Conection or network error on "updateStock":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AccountProductService]: "updateStock": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };
@@ -178,7 +159,7 @@ export class AccountProductsService {
 
   async restoreProduct(productId: string): Promise<void | string>{
     try {
-      const result = await firstValueFrom(
+      await firstValueFrom(
         withAuthRetry<void>(() => 
           this.http.patch<void>(`${this.apiUrl}/product/restore/${productId}`, {}, { withCredentials: true }),
           this.authService
@@ -192,13 +173,9 @@ export class AccountProductsService {
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AccountProductService]: Conection or network error on "restoreProduct":', err);
-        }
         errorMessage = 'NETWORK_ERROR'; 
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AccountProductService]: "restoreProduct": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };

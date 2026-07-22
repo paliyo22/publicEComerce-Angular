@@ -4,8 +4,9 @@ import { environment } from '../../../../environments/environment.development';
 import { AuthService } from '../auth/auth-service';
 import { AccountSchema, AuthSchema, validateAccountSchema, validateAuth } from '../../../../schemas/account-schemas';
 import { withAuthRetry } from '../../../../helpers/withRetry';
-import { catchError, firstValueFrom, map, of, tap, timeout, TimeoutError } from 'rxjs';
+import { catchError, firstValueFrom, map, of, tap, timeout } from 'rxjs';
 import { NewBusinessSchema, NewUserSchema, UpdateBusinessSchema, UpdateUserSchema } from '../../../../schemas/create-account-schema';
+import { AlertService } from '../../../alert-component/alert-service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ import { NewBusinessSchema, NewUserSchema, UpdateBusinessSchema, UpdateUserSchem
 export class AccountService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private readonly alertService = inject(AlertService);
   private apiUrl = environment.API_URL;
 
   private accountSignal = signal({
@@ -53,11 +55,9 @@ export class AccountService {
     ).pipe(
       timeout(6700),
       map((response) => {
-        console.log(response);
         const result = validateAccountSchema(response);
         if(!result.success){
-          console.error(`[AccountService]: Validation of response failed on "getAccountInfo".`, result.issues);
-          throw new Error('ERROR');
+          throw new Error('PARSE_ERROR');
         };
         return result.output;
       }),
@@ -74,14 +74,10 @@ export class AccountService {
           if(err instanceof Error){
             errorMessage = err.message;
           }else{
-            if(!(err instanceof TimeoutError)){
-              console.error('[AccountService]: Conection or network error on "getAccountInfo":', err);
-            };
-            errorMessage = 'NETWORK_ERROR' 
+            errorMessage = 'NETWORK_ERROR';
           };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountService]: "getAccountInfo": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.accountSignal.update((state) => ({
@@ -97,27 +93,27 @@ export class AccountService {
   async createAccount(account: NewBusinessSchema | NewUserSchema): Promise<string | void>{
     try {
       const result = await firstValueFrom(
-        this.http.post<AuthSchema | void>(`${this.apiUrl}/account`, account).pipe(timeout(6700))
+        this.http.post<AuthSchema | void>(`${this.apiUrl}/account`, account, {withCredentials: true}).pipe(timeout(6700))
       );
 
       if(result){
         const auth = validateAuth(result);
         if(!auth.success){
-          console.error(`[AccountService]: Validation of response failed on "createAccount".`, auth.issues);
-        }else {
-          this.authService.log(result);
-        };
+          throw new Error('PARSE_ERROR');
+        }else{
+          this.authService.log(auth.output);
+        }
       };
     } catch (err: any) {
       let errorMessage: string;
       if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-        if(!(err instanceof TimeoutError)){
-          console.error('[AccountService]: Conection or network error on "createAccount":', err);
-        }
-        errorMessage = 'NETWORK_ERROR'; 
+        if(err instanceof Error){
+          errorMessage = err.message;
+        }else{
+          errorMessage = 'NETWORK_ERROR' 
+        };
       }else{
         errorMessage = err.error?.message || 'ERROR';
-        console.error(`[AccountService]: "createAccount": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
       };
       return errorMessage;
     };
@@ -130,7 +126,6 @@ export class AccountService {
       loading: true,
       error: null
     }));
-    console.log(account);
     withAuthRetry<AccountSchema | void>(() => 
       this.http.put<AccountSchema | void>(`${this.apiUrl}/account`, account, {withCredentials: true}),
       this.authService
@@ -140,10 +135,10 @@ export class AccountService {
         if(response){
           const result = validateAccountSchema(response);
           if(!result.success){
-            console.error(`[AccountService]: Validation of response failed on "updateAccount".`, result.issues);
-            return;
+            throw new Error('PARSE_ERROR');
+          }else{
+            return result.output;
           };
-          return result.output;
         }else {
           return;
         };
@@ -158,17 +153,18 @@ export class AccountService {
         }else{
           this.getAccountInfo(true);
         };
+        this.alertService.setAlert('Exito.', 'success');
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AccountService]: Conection or network error on "updateAccount":', err);
-          }
-          errorMessage = 'NETWORK_ERROR'; 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR' 
+          };
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountService]: "updateAccount": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.accountSignal.update((state) => ({
@@ -200,17 +196,14 @@ export class AccountService {
           ...state,
           loading: false
         }));
+        this.alertService.setAlert('Exito.', 'success');
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AccountService]: Conection or network error on "changePassword":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountService]: "changePassword": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
         this.accountSignal.update((state) => ({
           ...state,
@@ -240,17 +233,14 @@ export class AccountService {
           ...state,
           loading: false
         }));
+        this.alertService.setAlert('Exito.', 'success');
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AccountService]: Conection or network error on "changeCbu":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountService]: "changeCbu": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.accountSignal.update((state) => ({
@@ -279,17 +269,14 @@ export class AccountService {
       tap(() => {
         this.reset();
         this.authService.reset();
+        this.alertService.setAlert('Exito.', 'success');
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          if(!(err instanceof TimeoutError)){
-            console.error('[AccountService]: Conection or network error on "deleteAccount":', err);
-          }
           errorMessage = 'NETWORK_ERROR'; 
         }else{
           errorMessage = err.error?.message || 'ERROR';
-          console.error(`[AccountService]: "deleteAccount": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
         };
 
         this.accountSignal.update((state) => ({

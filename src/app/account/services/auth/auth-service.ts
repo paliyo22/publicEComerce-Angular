@@ -1,14 +1,16 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../../environments/environment.development';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { AuthSchema, LogSchema } from '../../../../schemas/account-schemas';
-import { catchError, Observable, of, switchMap, tap, timeout } from 'rxjs';
+import { AuthSchema, LogSchema, validateAuth } from '../../../../schemas/account-schemas';
+import { catchError, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
+import { AlertService } from '../../../alert-component/alert-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private alertService = inject(AlertService);
   private apiUrl = environment.API_URL;
 
   private authSignal = signal({
@@ -33,6 +35,7 @@ export class AuthService {
       loading: false,
       error: null
     }));
+    this.alertService.setAlert(`Bienvenido ${this.authSignal().data!.username}`, 'info');
   };
 
   logIn(data: LogSchema){
@@ -46,18 +49,30 @@ export class AuthService {
     this.http.post<AuthSchema>(`${this.apiUrl}/auth/login`, data, {withCredentials: true})
     .pipe(
       timeout(6700),
+      map((response) => {
+        const auth = validateAuth(response);
+        if(!auth.success){
+          throw new Error('PARSE_ERROR');
+        }else {
+          return auth.output;
+        };
+      }),
       tap((result) => {
         this.authSignal.update(() => ({
           data: result,
           loading: false,
           error: null
         }));
+        this.alertService.setAlert(`Bienvenido ${this.authSignal().data!.username}`, 'info');
       }),
       catchError((err) => {
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          console.error('[AuthService] Conection or network error:', err);
-          errorMessage = 'NETWORK_ERROR' 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR' 
+          }; 
         }else{
           errorMessage = err.error?.message || 'Error on "logIn"'
         };
@@ -85,14 +100,13 @@ export class AuthService {
       timeout(6700),
       tap(() => {
         this.reset();
+        this.alertService.setAlert(`Hasta la proxima.`, 'success');
       }),
       catchError((err) => {
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          console.error('[AuthService] Conection or network error:', err);
-          // ACA CONFIGURAR UNA ALERTA DEERROR AL INTENTAR CERRAR SESION 
+          this.alertService.setAlert(`Error de coneccion al intentar cerrar sesion. Recargue la pagina e intente nuevamente.`, 'error');
         }else{
-          // ACA CONFIGURAR UNA ALERTA DE SESION CERRADA
-          console.error(`[AuthService]: "logOut": ${err.error}`); //ELIMINAR LUEGO DE PRUEBAS
+          this.alertService.setAlert(`Hasta la proxima.`, 'success');
           this.reset();
         };
         return of (null);
@@ -103,6 +117,14 @@ export class AuthService {
   refresh(): Observable<boolean>{
     return this.http.post<AuthSchema>(`${this.apiUrl}/auth/refresh`, {}, { withCredentials: true })
     .pipe(
+      map((response) => {
+        const auth = validateAuth(response);
+        if(!auth.success){
+          throw new Error('PARSE_ERROR');
+        }else {
+          return auth.output;
+        };
+      }),
       tap((result) => {
         this.authSignal.update(() => ({
           data: result,
@@ -117,14 +139,15 @@ export class AuthService {
         };
         let errorMessage: string;
         if (err.status === 0 || !(err instanceof HttpErrorResponse)) {
-          console.error('[AuthService] Conection or network error:', err);
-          errorMessage = 'NETWORK_ERROR' 
+          if(err instanceof Error){
+            errorMessage = err.message;
+          }else{
+            errorMessage = 'NETWORK_ERROR';
+          };
         }else{
-          errorMessage = err.error?.message || 'Your session has expired.'
-          console.error(`[AuthService]: "refresh": ${errorMessage}`); //ELIMINAR LUEGO DE PRUEBAS
+          errorMessage = err.error?.message || 'Your session has expired.';
         };
-
-        // ACA CONFIGURAR UNA ALERTA DE SESION VENCIDA 
+        this.alertService.setAlert(`La session ha expirado.`, 'info');
         this.reset();
         return of (false);
       })

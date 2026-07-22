@@ -45,6 +45,9 @@
             El nombre de usuario ya está ocupado. Elegí uno diferente.
           </p>
         }
+        @case ('PARSE_ERROR') {
+          <p class="alert alert--error">Error al procesar la informacion, contactá a soporte técnico.</p>
+        }
         @default {
           @if (show() === 'password' || show() === 'cbu') {
             <p class="alert alert--error">
@@ -156,7 +159,7 @@
                   @if (account.userProfile!.birth) {
                     <div class="account__data-item">
                       <dt>Fecha de nacimiento</dt>
-                      <dd>{{ account.userProfile!.birth | date:'dd/MM/yyyy' : 'UTC' }}</dd>
+                      <dd>{{ account.userProfile!.birth | date:'dd/MM/yyyy' : 'UTC-3' }}</dd>
                     </div>
                   }
                   @if (account.userProfile!.phone) {

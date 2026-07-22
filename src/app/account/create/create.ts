@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccountService } from '../services/account/account-service';
 import { validateNewBusiness, validateNewUser } from '../../../schemas/create-account-schema';
+import { AlertService } from '../../alert-component/alert-service';
 
 @Component({
   selector: 'app-account-create',
@@ -13,6 +14,7 @@ import { validateNewBusiness, validateNewUser } from '../../../schemas/create-ac
 })
 export class AccountCreate {
   private readonly accountService = inject(AccountService);
+  private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -85,10 +87,7 @@ export class AccountCreate {
       }));
       const account = await this.accountService.createAccount(result.output);
       if(!account){
-        //alerta con mensaje de cuenta creada correctamente, en caso de que retorne void
-        //(implica que se creo pero fallo al encontrar la cuenta, por lo que lei podria llegar a pasar luego de ejecutar la transaccion de creacion) 
         this.router.navigate(['/']);
-        // no corrijo el state porque al redirigir, se destruye el componente y por lo tanto no hace falta.
       }else{
         this.state.update(() => ({
           loading: false,
@@ -96,8 +95,7 @@ export class AccountCreate {
         }));
       }
     }else{
-      console.log(result.issues);
-      // mensaje de error en lo ingresado.
+      this.alertService.setAlert('Error al procesar la informacion, contactá a soporte técnico.', 'error');
     };
   }
 }
